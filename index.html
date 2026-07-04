@@ -63,6 +63,20 @@ header h1{font-size:1.1rem;margin:0;}
 .slot-zone.reject-flash{animation:reject .3s ease;}
 @keyframes reject{0%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}
 .slot-zone.locked{pointer-events:none;}
+.slot-zone.slot-correct{border-style:solid;border-color:var(--good);background:#eef8ee;}
+.slot-zone.slot-wrong{border-style:solid;border-color:var(--bad);background:#fdecea;}
+.slot-ans-tag{font-size:.65rem;color:var(--bad);margin-left:6px;font-weight:bold;white-space:nowrap;}
+
+.confirm-row{display:none;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:8px;}
+.confirm-check{display:flex;align-items:center;gap:8px;font-size:.82rem;margin-bottom:9px;cursor:pointer;}
+.confirm-check input{width:18px;height:18px;flex:0 0 auto;}
+.confirm-row .check-btn:disabled{opacity:.5;cursor:not-allowed;}
+
+.completed-box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 10px;margin-bottom:10px;}
+.completed-lbl{font-size:.63rem;font-weight:bold;color:#8a7f6a;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
+.completed-list{display:flex;flex-wrap:wrap;gap:5px;max-height:120px;overflow-y:auto;}
+.completed-chip{font-size:.7rem;background:#eef2fa;color:var(--navy);border-radius:12px;padding:3px 8px;font-weight:bold;white-space:nowrap;}
+.completed-empty{font-size:.72rem;color:#c5bba8;}
 
 .pool-section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 10px;margin-bottom:12px;}
 .pool-row{display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;flex-wrap:nowrap;}
@@ -233,7 +247,7 @@ function clearCanvas(){if(!ctx||!cvs)return;ctx.clearRect(0,0,cvs.offsetWidth,19
 
 // ── State ─────────────────────────────────────────────────────
 let phase='start',wordOrder=[],wIdx=0,subPhase='input';
-let wordResults=[];
+let wordResults=[],completedWords=[];
 let slotContents={},poolSet=new Set();
 let tapSel=null,pnd=null,ghost=null,isDrag=false;
 
@@ -243,16 +257,43 @@ function esc(s){return s.replace(/'/g,"\\'");}
 function startQuiz(){
   wordOrder=shuffle(WORDS.map((_,i)=>i));
   slotContents={};poolSet=new Set(shuffle([...SA_ALL]));
-  wordResults=[];wIdx=0;subPhase='input';phase='quiz';render();
+  wordResults=[];completedWords=[];wIdx=0;subPhase='input';phase='quiz';render();
+}
+function showConfirm(){
+  document.getElementById('checkRow').style.display='none';
+  document.getElementById('confirmRow').style.display='block';
+}
+function onConfirmCheck(){
+  document.getElementById('confirmBtn').disabled=!document.getElementById('confirmCheck').checked;
+}
+function gradeMatchSlots(w){
+  const wk=w.word;
+  [['syn',w.syn],['ant',w.ant],['pos',w.pos]].forEach(([type,correct])=>{
+    if(!correct)return;
+    const slotId=wk+'-'+type;
+    const el=document.getElementById('slot-'+slotId);
+    if(!el)return;
+    const val=slotContents[slotId];
+    const ok=val&&val.toLowerCase()===correct.toLowerCase();
+    el.classList.add(ok?'slot-correct':'slot-wrong');
+    if(!ok){
+      const tag=document.createElement('span');
+      tag.className='slot-ans-tag';
+      tag.textContent=(val?'':'미입력 · ')+'정답: '+correct;
+      el.appendChild(tag);
+    }
+  });
 }
 function revealWord(){
   const w=WORDS[wordOrder[wIdx]];
   document.getElementById('answerReveal').style.display='block';
   document.getElementById('gradeRow').style.display='flex';
   document.getElementById('checkRow').style.display='none';
+  document.getElementById('confirmRow').style.display='none';
   if(cvs)cvs.style.pointerEvents='none';
   const cb=document.getElementById('clearBtn');if(cb)cb.style.display='none';
   document.querySelectorAll('.slot-zone').forEach(el=>el.classList.add('locked'));
+  gradeMatchSlots(w);
   subPhase='revealed';
   speakWord3x(w.word,'soundBtn');
 }
@@ -262,6 +303,7 @@ function gradeDictation(ok){
   document.getElementById('nextBtn').style.display='block';
 }
 function nextWord(){
+  completedWords.push(WORDS[wordOrder[wIdx]].word);
   wIdx++;
   if(wIdx>=wordOrder.length){phase='result';render();return;}
   subPhase='input';tapSel=null;render();
@@ -478,10 +520,18 @@ function render(){
           <button class="grade-btn ok" onclick="gradeDictation(true)">✓ 맞아요</button>
           <button class="grade-btn no" onclick="gradeDictation(false)">✗ 틀렸어요</button>
         </div>
-        <div class="check-row" id="checkRow"><button class="check-btn" onclick="revealWord()">확인하기 →</button></div>
+        <div class="check-row" id="checkRow"><button class="check-btn" onclick="showConfirm()">확인하기 →</button></div>
+        <div class="confirm-row" id="confirmRow">
+          <label class="confirm-check"><input type="checkbox" id="confirmCheck" onchange="onConfirmCheck()"> Synonym · Antonym · Part of Speech 모두 입력했나요?</label>
+          <button class="check-btn" id="confirmBtn" onclick="revealWord()" disabled>확인 →</button>
+        </div>
         <button class="next-btn" id="nextBtn" onclick="nextWord()">${wIdx+1<WORDS.length?'다음 단어 →':'결과 보기 →'}</button>
       </div>
       <div class="right-panel">
+        <div class="completed-box">
+          <div class="completed-lbl">완료 ${completedWords.length} / ${WORDS.length}</div>
+          <div class="completed-list">${completedWords.length?completedWords.map((cw,i)=>`<span class="completed-chip">${i+1}. ${cw}</span>`).join(''):'<span class="completed-empty">아직 완료한 단어 없음</span>'}</div>
+        </div>
         <div class="slot-group">
           <div class="slot-row">
             <div class="slot-lbl lbl-syn">Synonym</div>
