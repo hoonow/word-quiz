@@ -8,13 +8,17 @@
 :root{--ink:#2b2520;--paper:#faf6ee;--card:#fffdf8;--rust:#c1502e;--navy:#3a4d6b;--gold:#d9a441;--line:#e6ddc9;--good:#4a7c4e;--bad:#b3413a;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 body{margin:0;font-family:'Georgia',serif;background:var(--paper);color:var(--ink);}
-.wrap{max-width:700px;margin:0 auto;padding:14px 12px 60px;}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 12px 60px;}
 header{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:3px solid var(--ink);margin-bottom:14px;}
 header h1{font-size:1.1rem;margin:0;}
 .stamp{font-size:.7rem;border:1px solid var(--ink);padding:3px 8px;border-radius:3px;}
 .progress-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:16px;}
 .progress-fill{height:100%;background:var(--rust);transition:width .3s;}
-.stage-label{font-size:.75rem;color:var(--navy);font-weight:bold;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase;}
+.stage-label{font-size:.75rem;color:var(--navy);font-weight:bold;letter-spacing:.5px;text-transform:uppercase;}
+.stage-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:10px;}
+.prev-btn{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;
+  font-size:.78rem;font-weight:bold;color:var(--navy);cursor:pointer;font-family:inherit;}
+.prev-btn:disabled{opacity:.35;cursor:not-allowed;}
 
 .top-btns{display:flex;gap:10px;margin-bottom:12px;}
 .top-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
@@ -26,9 +30,10 @@ header h1{font-size:1.1rem;margin:0;}
   border-radius:50%;animation:spin .6s linear infinite;display:none;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-.main-area{display:flex;gap:14px;margin-bottom:14px;align-items:flex-start;}
-.left-panel{flex:0 0 54%;min-width:0;}
-.right-panel{flex:1;}
+.main-area{display:flex;gap:14px;margin-bottom:14px;align-items:flex-start;flex-wrap:wrap;}
+.left-panel{flex:1 1 360px;min-width:300px;}
+.mid-panel{flex:1 1 260px;min-width:240px;}
+.side-panel{flex:1 1 200px;min-width:200px;}
 
 .canvas-wrap{position:relative;border:2px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;margin-bottom:8px;}
 #handCanvas{display:block;width:100%;height:190px;touch-action:none;cursor:crosshair;}
@@ -308,6 +313,14 @@ function nextWord(){
   if(wIdx>=wordOrder.length){phase='result';render();return;}
   subPhase='input';tapSel=null;render();
 }
+function prevWord(){
+  if(wIdx<=0)return;
+  wIdx--;
+  completedWords.length=wIdx;
+  const wk=WORDS[wordOrder[wIdx]].word;
+  wordResults=wordResults.filter(r=>r.word!==wk);
+  subPhase='input';tapSel=null;render();
+}
 
 // ── Drag & Drop ───────────────────────────────────────────────
 function rejectFlash(slotId){
@@ -504,7 +517,10 @@ function render(){
     document.getElementById('progressFill').style.width=pct+'%';
     const w=WORDS[wordOrder[wIdx]],wk=w.word;
     app.innerHTML=`
-    <div class="stage-label">${wIdx+1} / ${WORDS.length} 단어</div>
+    <div class="stage-nav">
+      <button class="prev-btn" onclick="prevWord()" ${wIdx===0?'disabled':''}>← 이전 단어</button>
+      <div class="stage-label">${wIdx+1} / ${WORDS.length} 단어</div>
+    </div>
     <div class="top-btns">
       <button class="top-btn sound" id="soundBtn" onclick="speakWord3x('${esc(wk)}','soundBtn')">🔊 발음 3회<span class="spin"></span></button>
       <button class="top-btn hint"  id="hintBtn"  onclick="speakOnce('${esc(w.example)}','hintBtn')">💡 예문<span class="spin"></span></button>
@@ -517,8 +533,8 @@ function render(){
         </div>
         <div class="answer-reveal" id="answerReveal"><div class="lbl">정답</div><div class="wrd">${wk}</div></div>
         <div class="grade-row" id="gradeRow">
-          <button class="grade-btn ok" onclick="gradeDictation(true)">✓ 맞아요</button>
-          <button class="grade-btn no" onclick="gradeDictation(false)">✗ 틀렸어요</button>
+          <button class="grade-btn ok" onclick="gradeDictation(true)">✓ Spelling 맞음</button>
+          <button class="grade-btn no" onclick="gradeDictation(false)">✗ Spelling 틀림</button>
         </div>
         <div class="check-row" id="checkRow"><button class="check-btn" onclick="showConfirm()">확인하기 →</button></div>
         <div class="confirm-row" id="confirmRow">
@@ -527,11 +543,7 @@ function render(){
         </div>
         <button class="next-btn" id="nextBtn" onclick="nextWord()">${wIdx+1<WORDS.length?'다음 단어 →':'결과 보기 →'}</button>
       </div>
-      <div class="right-panel">
-        <div class="completed-box">
-          <div class="completed-lbl">완료 ${completedWords.length} / ${WORDS.length}</div>
-          <div class="completed-list">${completedWords.length?completedWords.map((cw,i)=>`<span class="completed-chip">${i+1}. ${cw}</span>`).join(''):'<span class="completed-empty">아직 완료한 단어 없음</span>'}</div>
-        </div>
+      <div class="mid-panel">
         <div class="slot-group">
           <div class="slot-row">
             <div class="slot-lbl lbl-syn">Synonym</div>
@@ -545,6 +557,12 @@ function render(){
             <div class="slot-lbl lbl-pos">Part of Speech</div>
             <div class="slot-zone" id="slot-${wk}-pos" data-slot-id="${wk}-pos" onclick="handleSlotClick('${wk}-pos')"></div>
           </div>
+        </div>
+      </div>
+      <div class="side-panel">
+        <div class="completed-box">
+          <div class="completed-lbl">완료 ${completedWords.length} / ${WORDS.length}</div>
+          <div class="completed-list">${completedWords.length?completedWords.map((cw,i)=>`<span class="completed-chip">${i+1}. ${cw}</span>`).join(''):'<span class="completed-empty">아직 완료한 단어 없음</span>'}</div>
         </div>
       </div>
     </div>
