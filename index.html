@@ -97,6 +97,7 @@ header h1{font-size:1.1rem;margin:0;}
 .chip.selected{box-shadow:0 0 0 3px var(--gold);transform:scale(1.06);}
 .chip.ghost-chip{position:fixed;pointer-events:none;z-index:9999;opacity:.88;cursor:grabbing;}
 .chip.in-slot{font-size:.78rem;padding:4px 8px;cursor:grab;}
+.chip-remove{opacity:.55;font-weight:bold;margin-left:1px;}
 .sel-badge{font-size:.72rem;color:var(--gold);text-align:center;min-height:16px;margin-top:4px;}
 .start-btn{margin-top:16px;background:var(--rust);color:#fff;border:none;
   padding:15px 32px;border-radius:10px;font-size:1rem;font-weight:bold;cursor:pointer;}
@@ -393,18 +394,22 @@ function cancelDrag(){
 }
 function handleTap(p){
   if(subPhase==='revealed')return;
+  if(p.fromSlot){
+    // tapping a chip already sitting in a slot cancels it back to the pool
+    delete slotContents[p.fromSlot];
+    if(!p.isP)poolSet.add(p.answer);
+    updateSlot(p.fromSlot);updatePool();
+    return;
+  }
   if(tapSel){
     if(tapSel.answer===p.answer&&tapSel.fromSlot===p.fromSlot){
-      if(tapSel.fromSlot){slotContents[tapSel.fromSlot]=tapSel.answer;updateSlot(tapSel.fromSlot);}
-      else if(!tapSel.isP)poolSet.add(tapSel.answer);
+      if(!tapSel.isP)poolSet.add(tapSel.answer);
       tapSel=null;updatePool();return;
     }
-    if(tapSel.fromSlot){slotContents[tapSel.fromSlot]=tapSel.answer;updateSlot(tapSel.fromSlot);}
-    else if(!tapSel.isP)poolSet.add(tapSel.answer);
+    if(!tapSel.isP)poolSet.add(tapSel.answer);
   }
   tapSel={...p};
-  if(p.fromSlot){delete slotContents[p.fromSlot];updateSlot(p.fromSlot);}
-  else if(!p.isP)poolSet.delete(p.answer);
+  if(!p.isP)poolSet.delete(p.answer);
   updatePool();
 }
 function handleSlotClick(slotId){
@@ -415,9 +420,9 @@ function handleSlotClick(slotId){
   }
   const ex=slotContents[slotId];
   if(ex){
-    const iP=isPOS(ex);
-    tapSel={answer:ex,isP:iP,fromSlot:slotId};
-    delete slotContents[slotId];if(!iP)poolSet.delete(ex);
+    // tapping a filled, unselected slot cancels its chip back to the pool
+    delete slotContents[slotId];
+    if(!isPOS(ex))poolSet.add(ex);
     updateSlot(slotId);updatePool();
   }
 }
@@ -447,7 +452,7 @@ function updateSlot(slotId){
   el.classList.toggle('has-chip',!!ans);
   if(ans){
     const iP=isPOS(ans),sel=tapSel&&tapSel.answer===ans&&tapSel.fromSlot===slotId;
-    el.innerHTML=`<span class="chip in-slot ${iP?'pos-chip':'sa-chip'}${sel?' selected':''}" onpointerdown="onChipDown(event,'${esc(ans)}',${iP},'${slotId}')">${ans}</span>`;
+    el.innerHTML=`<span class="chip in-slot ${iP?'pos-chip':'sa-chip'}${sel?' selected':''}" onpointerdown="onChipDown(event,'${esc(ans)}',${iP},'${slotId}')">${ans} <span class="chip-remove">✕</span></span>`;
   }else if(isSel){
     el.innerHTML='<span style="font-size:.68rem;color:var(--gold)">✦ 선택됨</span>';
   }else{el.innerHTML='';}
