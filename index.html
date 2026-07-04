@@ -275,11 +275,20 @@ function onConfirmCheck(){
 function gradeMatchSlots(w){
   const wk=w.word;
   [['syn',w.syn],['ant',w.ant],['pos',w.pos]].forEach(([type,correct])=>{
-    if(!correct)return;
     const slotId=wk+'-'+type;
     const el=document.getElementById('slot-'+slotId);
     if(!el)return;
     const val=slotContents[slotId];
+    if(!correct){
+      if(val){
+        el.classList.add('slot-wrong');
+        const tag=document.createElement('span');
+        tag.className='slot-ans-tag';
+        tag.textContent='정답 없음';
+        el.appendChild(tag);
+      }
+      return;
+    }
     const ok=val&&val.toLowerCase()===correct.toLowerCase();
     el.classList.add(ok?'slot-correct':'slot-wrong');
     if(!ok){
@@ -320,6 +329,10 @@ function prevWord(){
   completedWords.length=wIdx;
   const wk=WORDS[wordOrder[wIdx]].word;
   wordResults=wordResults.filter(r=>r.word!==wk);
+  ['syn','ant','pos'].forEach(t=>{
+    const sid=wk+'-'+t,val=slotContents[sid];
+    if(val){if(!isPOS(val))poolSet.add(val);delete slotContents[sid];}
+  });
   subPhase='input';tapSel=null;render();
 }
 
@@ -465,7 +478,9 @@ function buildResult(){
   wordResults.forEach(r=>{if(r.dictOk)dictOk++;});
   WORDS.forEach(w=>{
     if(w.syn){mapTot++;if((slotContents[w.word+'-syn']||'').toLowerCase()===w.syn.toLowerCase())mapOk++;}
+    else if(slotContents[w.word+'-syn']){mapTot++;}
     if(w.ant){mapTot++;if((slotContents[w.word+'-ant']||'').toLowerCase()===w.ant.toLowerCase())mapOk++;}
+    else if(slotContents[w.word+'-ant']){mapTot++;}
     mapTot++;if((slotContents[w.word+'-pos']||'').toLowerCase()===w.pos.toLowerCase())mapOk++;
   });
   const total=dictTot+mapTot,allOk=dictOk+mapOk;
@@ -478,7 +493,10 @@ function buildResult(){
     const spellCell=`<span class="${dOk?'spell-ok':'spell-no'}">${w.word} ${dOk?'✓':'✗'}</span>`;
 
     const mkCell=(userVal,correct,hasAnswer)=>{
-      if(!hasAnswer) return `<span class="cell-na">—</span>`;
+      if(!hasAnswer){
+        if(!userVal) return `<span class="cell-na">—</span>`;
+        return `<span class="cell-no">${userVal} ✗<span class="cell-ans">정답 없음</span></span>`;
+      }
       if(!userVal) return `<span class="cell-no">없음 ✗<span class="cell-ans">${correct}</span></span>`;
       const ok=userVal.toLowerCase()===correct.toLowerCase();
       if(ok) return `<span class="cell-ok">${userVal} ✓</span>`;
@@ -573,12 +591,12 @@ function render(){
     </div>
     <div class="pool-section">
       <div class="pool-row">
-        <span class="pool-lbl">품사</span>
-        <div class="pool-chips-inner" id="pos-pool"></div>
-      </div>
-      <div class="pool-row">
         <span class="pool-lbl">동의어/반의어</span>
         <div class="pool-chips-inner" id="sa-pool"></div>
+      </div>
+      <div class="pool-row">
+        <span class="pool-lbl">품사</span>
+        <div class="pool-chips-inner" id="pos-pool"></div>
       </div>
       <div class="sel-badge" id="sel-badge"></div>
     </div>`;
