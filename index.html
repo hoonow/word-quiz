@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>영단어 시험 — Week 20</title>
+<style>
+:root{--ink:#2b2520;--paper:#faf6ee;--card:#fffdf8;--rust:#c1502e;--navy:#3a4d6b;--gold:#d9a441;--line:#e6ddc9;--good:#4a7c4e;--bad:#b3413a;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;font-family:'Georgia',serif;background:var(--paper);color:var(--ink);}
+.wrap{max-width:700px;margin:0 auto;padding:14px 12px 60px;}
+header{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:3px solid var(--ink);margin-bottom:14px;}
+header h1{font-size:1.1rem;margin:0;}
+.stamp{font-size:.7rem;border:1px solid var(--ink);padding:3px 8px;border-radius:3px;}
+.progress-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-bottom:16px;}
+.progress-fill{height:100%;background:var(--rust);transition:width .3s;}
+.stage-label{font-size:.75rem;color:var(--navy);font-weight:bold;letter-spacing:.5px;margin-bottom:10px;text-transform:uppercase;}
+
+.top-btns{display:flex;gap:10px;margin-bottom:12px;}
+.top-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:12px 8px;border-radius:10px;border:none;font-size:.9rem;font-weight:bold;cursor:pointer;}
+.top-btn.sound{background:var(--rust);color:#fff;}
+.top-btn.hint{background:var(--navy);color:#fff;}
+.top-btn:disabled{opacity:.6;cursor:not-allowed;}
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;
+  border-radius:50%;animation:spin .6s linear infinite;display:none;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.main-area{display:flex;gap:14px;margin-bottom:14px;align-items:flex-start;}
+.left-panel{flex:0 0 54%;min-width:0;}
+.right-panel{flex:1;}
+
+.canvas-wrap{position:relative;border:2px solid var(--line);border-radius:10px;background:#fff;overflow:hidden;margin-bottom:8px;}
+#handCanvas{display:block;width:100%;height:190px;touch-action:none;cursor:crosshair;}
+.canvas-clear{position:absolute;top:7px;right:7px;background:rgba(255,255,255,.92);
+  border:1px solid var(--line);border-radius:6px;padding:5px 10px;font-size:.8rem;cursor:pointer;font-family:inherit;}
+.answer-reveal{text-align:center;padding:10px;border-radius:8px;background:#eef2fa;
+  border:2px solid var(--navy);display:none;margin-bottom:8px;}
+.answer-reveal .lbl{font-size:.68rem;color:var(--navy);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px;}
+.answer-reveal .wrd{font-size:1.9rem;font-weight:bold;color:var(--navy);letter-spacing:2px;}
+.grade-row{display:none;gap:10px;margin-bottom:8px;}
+.grade-btn{flex:1;padding:12px;border-radius:10px;border:none;font-size:.95rem;font-weight:bold;cursor:pointer;font-family:inherit;}
+.grade-btn.ok{background:var(--good);color:#fff;}
+.grade-btn.no{background:var(--bad);color:#fff;}
+.check-row{margin-bottom:8px;}
+.check-btn{width:100%;padding:12px;border-radius:10px;border:none;font-size:.95rem;font-weight:bold;
+  cursor:pointer;background:var(--ink);color:#fff;font-family:inherit;}
+.next-btn{width:100%;padding:12px;border-radius:10px;border:none;font-size:.95rem;font-weight:bold;
+  cursor:pointer;background:var(--navy);color:#fff;font-family:inherit;display:none;}
+
+.slot-group{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px;}
+.slot-row{margin-bottom:9px;}
+.slot-row:last-child{margin-bottom:0;}
+.slot-lbl{font-size:.66rem;font-weight:bold;letter-spacing:.4px;text-transform:uppercase;margin-bottom:3px;}
+.lbl-syn{color:var(--rust);}
+.lbl-ant{color:var(--navy);}
+.lbl-pos{color:var(--good);}
+.slot-zone{min-height:34px;border:1.5px dashed var(--line);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;background:#fff;
+  cursor:pointer;transition:border-color .1s,background .1s;padding:2px;}
+.slot-zone:hover,.slot-zone.drag-over{border-color:var(--navy);background:#f0f4fa;}
+.slot-zone.has-chip{border-style:solid;border-color:var(--navy);}
+.slot-zone.reject-flash{animation:reject .3s ease;}
+@keyframes reject{0%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}100%{transform:translateX(0)}}
+.slot-zone.locked{pointer-events:none;}
+
+.pool-section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 10px;margin-bottom:12px;}
+.pool-row{display:flex;align-items:flex-start;gap:6px;margin-bottom:8px;flex-wrap:nowrap;}
+.pool-row:last-child{margin-bottom:0;}
+.pool-lbl{font-size:.63rem;font-weight:bold;text-transform:uppercase;color:#8a7f6a;white-space:nowrap;min-width:54px;padding-top:5px;}
+.pool-chips-inner{display:flex;flex-wrap:wrap;gap:5px;}
+
+.chip{display:inline-flex;align-items:center;padding:5px 9px;border-radius:20px;font-size:.82rem;
+  font-weight:bold;cursor:grab;user-select:none;border:1.5px solid transparent;white-space:nowrap;touch-action:none;}
+.chip:active{cursor:grabbing;}
+.chip.pos-chip{background:#e8f5e4;color:var(--good);border-color:var(--good);}
+.chip.sa-chip{background:#fef0e6;color:#8b4c1e;border-color:#c47840;}
+.chip.selected{box-shadow:0 0 0 3px var(--gold);transform:scale(1.06);}
+.chip.ghost-chip{position:fixed;pointer-events:none;z-index:9999;opacity:.88;cursor:grabbing;}
+.chip.in-slot{font-size:.78rem;padding:4px 8px;cursor:grab;}
+.sel-badge{font-size:.72rem;color:var(--gold);text-align:center;min-height:16px;margin-top:4px;}
+.start-btn{margin-top:16px;background:var(--rust);color:#fff;border:none;
+  padding:15px 32px;border-radius:10px;font-size:1rem;font-weight:bold;cursor:pointer;}
+
+/* ── Result Table ── */
+.result-header{text-align:center;padding:14px 0 10px;}
+.result-score-big{font-size:2.8rem;font-weight:bold;color:var(--rust);line-height:1;}
+.score-pills{display:flex;justify-content:center;gap:10px;margin:10px 0;}
+.pill{font-size:.82rem;padding:5px 14px;border-radius:20px;font-weight:bold;}
+.pill.dict{background:#eef2fa;color:var(--navy);}
+.pill.match{background:#f0faf0;color:var(--good);}
+.res-table-wrap{overflow-x:auto;margin-top:4px;}
+.res-table{width:100%;border-collapse:collapse;font-size:.8rem;}
+.res-table th{padding:8px 6px;border-bottom:2px solid var(--ink);font-size:.7rem;
+  text-align:center;font-weight:bold;letter-spacing:.3px;white-space:nowrap;}
+.res-table th:nth-child(2){text-align:left;}
+.res-table td{padding:6px 5px;border-bottom:1px solid var(--line);text-align:center;vertical-align:middle;}
+.res-table td:nth-child(2){text-align:left;font-weight:bold;}
+.res-table tr:nth-child(even) td{background:#f5f0e6;}
+.num{color:#8a7f6a;font-size:.75rem;}
+.spell-ok{color:var(--good);}
+.spell-no{color:var(--bad);}
+.cell-ok{color:var(--good);font-weight:bold;}
+.cell-no{color:var(--bad);}
+.cell-ans{display:block;font-size:.72rem;color:var(--good);font-weight:bold;}
+.cell-na{color:#c5bba8;}
+.restart-btn{display:block;margin:16px auto 0;background:var(--navy);color:#fff;border:none;
+  padding:12px 28px;border-radius:10px;font-size:.95rem;font-weight:bold;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>📝 영단어 시험</h1><span class="stamp">WEEK 20</span></header>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <div id="app"></div>
+</div>
+<script>
+const WORDS=[
+  {word:"treasure",   pos:"noun", example:"The pirate's treasure is hidden on the island.",                              syn:null,          ant:null},
+  {word:"accumulate", pos:"verb", example:"My family and I were surprised at all the things we accumulated.",            syn:"gather",      ant:null},
+  {word:"adopt",      pos:"verb", example:"My mom and dad adopted a puppy and a cat from the animal shelter.",          syn:null,          ant:"abandon"},
+  {word:"wealth",     pos:"noun", example:"Aiden acquired great wealth and many houses in the town.",                    syn:"assets",      ant:"debt"},
+  {word:"reprove",    pos:"verb", example:"The father reproved his son for making a mess.",                              syn:"reprimand",   ant:"praise"},
+  {word:"hesitate",   pos:"verb", example:"Sue typed some words and then hesitated before typing again.",                syn:"pause",       ant:null},
+  {word:"triumph",    pos:"noun", example:"Becoming a famous actress was Ashley's personal triumph.",                     syn:"success",     ant:"failure"},
+  {word:"sacrifice",  pos:"verb", example:"I sacrificed my playtime during recess and helped a classmate study.",       syn:null,          ant:null},
+  {word:"appetizing", pos:"adj.", example:"That steak with vegetables was very appetizing.",                             syn:"tasty",       ant:null},
+  {word:"compound",   pos:"noun", example:"The homemade juice is a compound of various fresh fruits.",                   syn:"combination", ant:null},
+  {word:"pleasantry", pos:"noun", example:"The two businessmen shared pleasantries.",                                    syn:null,          ant:null},
+  {word:"model",      pos:"noun", example:"You can see models of old ships in the museum.",                              syn:"sample",      ant:null},
+  {word:"compare",    pos:"verb", example:"Some people compare the singer's voice to the voice of an angel.",           syn:null,          ant:"contrast"},
+  {word:"label",      pos:"verb", example:"I labeled all the folders by subject.",                                       syn:"mark",        ant:null},
+  {word:"directions", pos:"noun", example:"We were lost, so I looked at my phone's navigation system for directions.", syn:null,          ant:null},
+];
+const SA_ALL=['gather','assets','reprimand','pause','success','tasty','combination','sample','mark','abandon','debt','praise','failure','contrast'];
+const POS_VALS=['noun','verb','adj.','adv.'];
+const isPOS=v=>POS_VALS.includes(v);
+
+// ── Type restriction ──────────────────────────────────────────
+function canDrop(slotId,isP){
+  const t=slotId.split('-').pop(); // syn | ant | pos
+  if(t==='pos'&&!isP) return false;   // SA chip → POS slot ✗
+  if(t!=='pos'&&isP)  return false;   // POS chip → SA slot ✗
+  return true;
+}
+
+// ── TTS ──────────────────────────────────────────────────────
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const audioCache={};
+function googleTTSUrl(t){return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(t)}&tl=en-US&client=tw-ob`;}
+async function getDictUrl(word){
+  if(word in audioCache) return audioCache[word];
+  try{
+    const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+    if(!res.ok)return(audioCache[word]=null);
+    const data=await res.json();let url='';
+    for(const e of data){
+      for(const p of(e.phonetics||[])){if(p.audio&&p.audio.includes('-us')){url=p.audio;break;}}
+      if(!url)for(const p of(e.phonetics||[])){if(p.audio){url=p.audio;break;}}
+      if(url)break;
+    }
+    if(url&&url.startsWith('//'))url='https:'+url;
+    return(audioCache[word]=url||null);
+  }catch{return(audioCache[word]=null);}
+}
+function playUrl(url){return new Promise(r=>{const a=new Audio(url);a.onended=r;a.onerror=r;a.play().catch(r);});}
+async function wSpeak(text){
+  return new Promise(r=>{
+    const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
+    const vs=speechSynthesis.getVoices();
+    const b=vs.find(v=>v.lang==='en-US')||vs.find(v=>v.lang.startsWith('en'));
+    if(b)u.voice=b;u.onend=r;u.onerror=r;speechSynthesis.cancel();speechSynthesis.speak(u);
+  });
+}
+async function playOnce(text){
+  // 1. Google Translate TTS
+  const ok=await new Promise(resolve=>{
+    const a=new Audio(googleTTSUrl(text));let done=false;
+    const fin=s=>{if(!done){done=true;resolve(s);}};
+    a.oncanplay=()=>a.play().then(()=>{}).catch(()=>fin(false));
+    a.onended=()=>fin(true);a.onerror=()=>fin(false);
+    setTimeout(()=>fin(false),4000);a.load();
+  });
+  if(ok)return;
+  // 2. Dict API (single word)
+  if(!text.includes(' ')){const du=await getDictUrl(text);if(du){await playUrl(du);return;}}
+  // 3. Web Speech
+  await wSpeak(text);
+}
+async function speakWord3x(word,btnId){
+  const btn=document.getElementById(btnId),sp=btn?.querySelector('.spin');
+  if(btn)btn.disabled=true;if(sp)sp.style.display='inline-block';
+  for(let i=0;i<3;i++){await playOnce(word);if(i<2)await wait(500);}
+  if(btn)btn.disabled=false;if(sp)sp.style.display='none';
+}
+async function speakOnce(text,btnId){
+  const btn=document.getElementById(btnId),sp=btn?.querySelector('.spin');
+  if(btn)btn.disabled=true;if(sp)sp.style.display='inline-block';
+  await playOnce(text);
+  if(btn)btn.disabled=false;if(sp)sp.style.display='none';
+}
+
+// ── Canvas ────────────────────────────────────────────────────
+let cvs=null,ctx=null,isDrawing=false;
+function initCanvas(){
+  cvs=document.getElementById('handCanvas');if(!cvs)return;
+  const r=window.devicePixelRatio||1,w=cvs.offsetWidth||360,h=190;
+  cvs.width=w*r;cvs.height=h*r;ctx=cvs.getContext('2d');ctx.scale(r,r);
+  ctx.lineCap='round';ctx.lineJoin='round';drawGuides(w,h);
+  cvs.addEventListener('pointerdown',onDown,{passive:false});
+  cvs.addEventListener('pointermove',onMove,{passive:false});
+  cvs.addEventListener('pointerup',onUp,{passive:false});
+  cvs.addEventListener('pointercancel',onUp,{passive:false});
+}
+function drawGuides(w,h){
+  ctx.save();ctx.strokeStyle='#e0d8c6';ctx.lineWidth=1;
+  [.38,.65,.88].forEach(r=>{ctx.beginPath();ctx.moveTo(0,h*r);ctx.lineTo(w,h*r);ctx.stroke();});
+  ctx.restore();
+}
+function getXY(e){const r=cvs.getBoundingClientRect();return[e.clientX-r.left,e.clientY-r.top];}
+function onDown(e){
+  e.preventDefault();isDrawing=true;
+  const[x,y]=getXY(e);ctx.beginPath();ctx.moveTo(x,y);
+  ctx.lineWidth=2.5+(e.pressure||.5)*2.5;ctx.strokeStyle='#1a1512';
+}
+function onMove(e){
+  e.preventDefault();if(!isDrawing)return;
+  const[x,y]=getXY(e);ctx.lineWidth=2.5+(e.pressure||.5)*2.5;
+  ctx.lineTo(x,y);ctx.stroke();ctx.beginPath();ctx.moveTo(x,y);
+}
+function onUp(){isDrawing=false;}
+function clearCanvas(){if(!ctx||!cvs)return;ctx.clearRect(0,0,cvs.offsetWidth,190);drawGuides(cvs.offsetWidth,190);}
+
+// ── State ─────────────────────────────────────────────────────
+let phase='start',wordOrder=[],wIdx=0,subPhase='input';
+let wordResults=[];
+let slotContents={},poolSet=new Set();
+let tapSel=null,pnd=null,ghost=null,isDrag=false;
+
+function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;}
+function esc(s){return s.replace(/'/g,"\\'");}
+
+function startQuiz(){
+  wordOrder=shuffle(WORDS.map((_,i)=>i));
+  slotContents={};poolSet=new Set(shuffle([...SA_ALL]));
+  wordResults=[];wIdx=0;subPhase='input';phase='quiz';render();
+}
+function revealWord(){
+  const w=WORDS[wordOrder[wIdx]];
+  document.getElementById('answerReveal').style.display='block';
+  document.getElementById('gradeRow').style.display='flex';
+  document.getElementById('checkRow').style.display='none';
+  if(cvs)cvs.style.pointerEvents='none';
+  const cb=document.getElementById('clearBtn');if(cb)cb.style.display='none';
+  document.querySelectorAll('.slot-zone').forEach(el=>el.classList.add('locked'));
+  subPhase='revealed';
+  speakWord3x(w.word,'soundBtn');
+}
+function gradeDictation(ok){
+  wordResults.push({word:WORDS[wordOrder[wIdx]].word,dictOk:ok});
+  document.getElementById('gradeRow').style.display='none';
+  document.getElementById('nextBtn').style.display='block';
+}
+function nextWord(){
+  wIdx++;
+  if(wIdx>=wordOrder.length){phase='result';render();return;}
+  subPhase='input';tapSel=null;render();
+}
+
+// ── Drag & Drop ───────────────────────────────────────────────
+function rejectFlash(slotId){
+  const el=document.getElementById('slot-'+slotId);
+  if(!el)return;
+  el.classList.add('reject-flash');
+  setTimeout(()=>el.classList.remove('reject-flash'),350);
+}
+function onChipDown(e,answer,isP,fromSlot){
+  e.preventDefault();e.stopPropagation();
+  if(subPhase==='revealed')return;
+  pnd={answer,isP,fromSlot,sx:e.clientX,sy:e.clientY};isDrag=false;
+  document.addEventListener('pointermove',onDragMove);
+  document.addEventListener('pointerup',onDragUp);
+  document.addEventListener('pointercancel',cancelDrag);
+}
+function onDragMove(e){
+  if(!pnd)return;
+  const dx=e.clientX-pnd.sx,dy=e.clientY-pnd.sy;
+  if(!isDrag&&Math.sqrt(dx*dx+dy*dy)>6){
+    isDrag=true;
+    ghost=document.createElement('span');
+    ghost.className=`chip ghost-chip ${pnd.isP?'pos-chip':'sa-chip'}`;
+    ghost.textContent=pnd.answer;document.body.appendChild(ghost);
+    if(pnd.fromSlot){delete slotContents[pnd.fromSlot];updateSlot(pnd.fromSlot);}
+    else if(!pnd.isP){poolSet.delete(pnd.answer);updatePool();}
+    tapSel=null;updatePool();
+  }
+  if(!isDrag)return;
+  e.preventDefault();
+  if(ghost){ghost.style.left=(e.clientX-35)+'px';ghost.style.top=(e.clientY-14)+'px';}
+  document.querySelectorAll('.slot-zone.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  const els=document.elementsFromPoint(e.clientX,e.clientY);
+  const s=els.find(el=>el.classList&&el.classList.contains('slot-zone')&&!el.classList.contains('locked'));
+  if(s&&canDrop(s.dataset.slotId,pnd.isP))s.classList.add('drag-over');
+}
+function onDragUp(e){
+  document.removeEventListener('pointermove',onDragMove);
+  document.removeEventListener('pointerup',onDragUp);
+  document.removeEventListener('pointercancel',cancelDrag);
+  document.querySelectorAll('.slot-zone.drag-over').forEach(el=>el.classList.remove('drag-over'));
+  if(ghost){ghost.remove();ghost=null;}
+  if(!isDrag){handleTap(pnd);pnd=null;isDrag=false;return;}
+  const els=document.elementsFromPoint(e.clientX,e.clientY);
+  const s=els.find(el=>el.classList&&el.classList.contains('slot-zone')&&!el.classList.contains('locked'));
+  if(s){
+    if(canDrop(s.dataset.slotId,pnd.isP))dropInSlot(s.dataset.slotId,pnd.answer,pnd.isP);
+    else{
+      rejectFlash(s.dataset.slotId);
+      // return chip to origin
+      if(pnd.fromSlot){slotContents[pnd.fromSlot]=pnd.answer;updateSlot(pnd.fromSlot);}
+      else{if(!pnd.isP)poolSet.add(pnd.answer);updatePool();}
+    }
+  }else{
+    if(pnd.fromSlot){slotContents[pnd.fromSlot]=pnd.answer;updateSlot(pnd.fromSlot);}
+    else{if(!pnd.isP)poolSet.add(pnd.answer);updatePool();}
+  }
+  pnd=null;isDrag=false;
+}
+function cancelDrag(){
+  document.removeEventListener('pointermove',onDragMove);
+  document.removeEventListener('pointerup',onDragUp);
+  document.removeEventListener('pointercancel',cancelDrag);
+  if(ghost){ghost.remove();ghost=null;}
+  if(pnd){
+    if(pnd.fromSlot){slotContents[pnd.fromSlot]=pnd.answer;updateSlot(pnd.fromSlot);}
+    else{if(!pnd.isP)poolSet.add(pnd.answer);updatePool();}
+  }
+  pnd=null;isDrag=false;
+}
+function handleTap(p){
+  if(subPhase==='revealed')return;
+  if(tapSel){
+    if(tapSel.answer===p.answer&&tapSel.fromSlot===p.fromSlot){
+      if(tapSel.fromSlot){slotContents[tapSel.fromSlot]=tapSel.answer;updateSlot(tapSel.fromSlot);}
+      else if(!tapSel.isP)poolSet.add(tapSel.answer);
+      tapSel=null;updatePool();return;
+    }
+    if(tapSel.fromSlot){slotContents[tapSel.fromSlot]=tapSel.answer;updateSlot(tapSel.fromSlot);}
+    else if(!tapSel.isP)poolSet.add(tapSel.answer);
+  }
+  tapSel={...p};
+  if(p.fromSlot){delete slotContents[p.fromSlot];updateSlot(p.fromSlot);}
+  else if(!p.isP)poolSet.delete(p.answer);
+  updatePool();
+}
+function handleSlotClick(slotId){
+  if(subPhase==='revealed')return;
+  if(tapSel){
+    if(!canDrop(slotId,tapSel.isP)){rejectFlash(slotId);return;}
+    dropInSlot(slotId,tapSel.answer,tapSel.isP);tapSel=null;updatePool();return;
+  }
+  const ex=slotContents[slotId];
+  if(ex){
+    const iP=isPOS(ex);
+    tapSel={answer:ex,isP:iP,fromSlot:slotId};
+    delete slotContents[slotId];if(!iP)poolSet.delete(ex);
+    updateSlot(slotId);updatePool();
+  }
+}
+function dropInSlot(slotId,answer,isP){
+  const old=slotContents[slotId];if(old&&!isPOS(old))poolSet.add(old);
+  slotContents[slotId]=answer;if(!isP)poolSet.delete(answer);
+  updateSlot(slotId);updatePool();
+}
+function updatePool(){
+  const posPool=document.getElementById('pos-pool');
+  const saPool=document.getElementById('sa-pool');
+  if(!posPool||!saPool)return;
+  posPool.innerHTML=POS_VALS.map(p=>{
+    const sel=tapSel&&tapSel.answer===p&&tapSel.isP;
+    return `<span class="chip pos-chip${sel?' selected':''}" onpointerdown="onChipDown(event,'${p}',true,null)">${p}</span>`;
+  }).join('');
+  saPool.innerHTML=[...poolSet].map(a=>{
+    const sel=tapSel&&tapSel.answer===a&&!tapSel.isP&&!tapSel.fromSlot;
+    return `<span class="chip sa-chip${sel?' selected':''}" onpointerdown="onChipDown(event,'${esc(a)}',false,null)">${a}</span>`;
+  }).join('');
+  const sb=document.getElementById('sel-badge');
+  if(sb)sb.textContent=tapSel?`✦ "${tapSel.answer}" 선택됨 — 슬롯을 탭하세요`:'';
+}
+function updateSlot(slotId){
+  const el=document.getElementById('slot-'+slotId);if(!el)return;
+  const ans=slotContents[slotId],isSel=tapSel&&tapSel.fromSlot===slotId;
+  el.classList.toggle('has-chip',!!ans);
+  if(ans){
+    const iP=isPOS(ans),sel=tapSel&&tapSel.answer===ans&&tapSel.fromSlot===slotId;
+    el.innerHTML=`<span class="chip in-slot ${iP?'pos-chip':'sa-chip'}${sel?' selected':''}" onpointerdown="onChipDown(event,'${esc(ans)}',${iP},'${slotId}')">${ans}</span>`;
+  }else if(isSel){
+    el.innerHTML='<span style="font-size:.68rem;color:var(--gold)">✦ 선택됨</span>';
+  }else{el.innerHTML='';}
+}
+
+// ── Result ─────────────────────────────────────────────────────
+function buildResult(){
+  const dictMap={};wordResults.forEach(r=>dictMap[r.word]=r.dictOk);
+  let dictOk=0,dictTot=WORDS.length,mapOk=0,mapTot=0;
+  wordResults.forEach(r=>{if(r.dictOk)dictOk++;});
+  WORDS.forEach(w=>{
+    if(w.syn){mapTot++;if((slotContents[w.word+'-syn']||'').toLowerCase()===w.syn.toLowerCase())mapOk++;}
+    if(w.ant){mapTot++;if((slotContents[w.word+'-ant']||'').toLowerCase()===w.ant.toLowerCase())mapOk++;}
+    mapTot++;if((slotContents[w.word+'-pos']||'').toLowerCase()===w.pos.toLowerCase())mapOk++;
+  });
+  const total=dictTot+mapTot,allOk=dictOk+mapOk;
+  const emoji=allOk===total?'🌟':allOk>=total*.8?'👍':'💪';
+  const msg=allOk===total?'완벽해요!':allOk>=total*.8?'잘했어요!':'다시 도전!';
+
+  // Build table rows (WORDS order, 1-15)
+  const rows=WORDS.map((w,i)=>{
+    const dOk=dictMap[w.word];
+    const spellCell=`<span class="${dOk?'spell-ok':'spell-no'}">${w.word} ${dOk?'✓':'✗'}</span>`;
+
+    const mkCell=(userVal,correct,hasAnswer)=>{
+      if(!hasAnswer) return `<span class="cell-na">—</span>`;
+      if(!userVal) return `<span class="cell-no">없음 ✗<span class="cell-ans">${correct}</span></span>`;
+      const ok=userVal.toLowerCase()===correct.toLowerCase();
+      if(ok) return `<span class="cell-ok">${userVal} ✓</span>`;
+      return `<span class="cell-no">${userVal} ✗<span class="cell-ans">${correct}</span></span>`;
+    };
+
+    const synCell=mkCell(slotContents[w.word+'-syn'],w.syn,!!w.syn);
+    const antCell=mkCell(slotContents[w.word+'-ant'],w.ant,!!w.ant);
+    const posCell=mkCell(slotContents[w.word+'-pos'],w.pos,true);
+
+    return `<tr>
+      <td><span class="num">${i+1}</span></td>
+      <td>${spellCell}</td>
+      <td>${synCell}</td>
+      <td>${antCell}</td>
+      <td>${posCell}</td>
+    </tr>`;
+  }).join('');
+
+  return{allOk,total,dictOk,dictTot,mapOk,mapTot,emoji,msg,rows};
+}
+
+// ── Render ────────────────────────────────────────────────────
+function render(){
+  const app=document.getElementById('app');
+
+  if(phase==='start'){
+    document.getElementById('progressFill').style.width='0%';
+    app.innerHTML=`<div style="text-align:center;padding:22px 8px">
+      <div style="font-size:2.4rem">📖</div><h2>WEEK 20 영단어 시험</h2>
+      <p style="color:#5c5345;line-height:1.8;font-size:.92rem">
+        왼쪽: 단어 받아쓰기 (펜으로)<br>오른쪽: 동의어 · 반의어 · 품사 드래그 배치<br>15단어 완료 후 자동 채점
+      </p>
+      <button class="start-btn" onclick="startQuiz()">시험 시작 →</button>
+    </div>`;
+    return;
+  }
+
+  if(phase==='quiz'){
+    const pct=Math.round((wIdx/WORDS.length)*100);
+    document.getElementById('progressFill').style.width=pct+'%';
+    const w=WORDS[wordOrder[wIdx]],wk=w.word;
+    app.innerHTML=`
+    <div class="stage-label">${wIdx+1} / ${WORDS.length} 단어</div>
+    <div class="top-btns">
+      <button class="top-btn sound" id="soundBtn" onclick="speakWord3x('${esc(wk)}','soundBtn')">🔊 발음 3회<span class="spin"></span></button>
+      <button class="top-btn hint"  id="hintBtn"  onclick="speakOnce('${esc(w.example)}','hintBtn')">💡 예문<span class="spin"></span></button>
+    </div>
+    <div class="main-area">
+      <div class="left-panel">
+        <div class="canvas-wrap">
+          <canvas id="handCanvas"></canvas>
+          <button class="canvas-clear" id="clearBtn" onclick="clearCanvas()">지우기</button>
+        </div>
+        <div class="answer-reveal" id="answerReveal"><div class="lbl">정답</div><div class="wrd">${wk}</div></div>
+        <div class="grade-row" id="gradeRow">
+          <button class="grade-btn ok" onclick="gradeDictation(true)">✓ 맞아요</button>
+          <button class="grade-btn no" onclick="gradeDictation(false)">✗ 틀렸어요</button>
+        </div>
+        <div class="check-row" id="checkRow"><button class="check-btn" onclick="revealWord()">확인하기 →</button></div>
+        <button class="next-btn" id="nextBtn" onclick="nextWord()">${wIdx+1<WORDS.length?'다음 단어 →':'결과 보기 →'}</button>
+      </div>
+      <div class="right-panel">
+        <div class="slot-group">
+          <div class="slot-row">
+            <div class="slot-lbl lbl-syn">Synonym</div>
+            <div class="slot-zone" id="slot-${wk}-syn" data-slot-id="${wk}-syn" onclick="handleSlotClick('${wk}-syn')"></div>
+          </div>
+          <div class="slot-row">
+            <div class="slot-lbl lbl-ant">Antonym</div>
+            <div class="slot-zone" id="slot-${wk}-ant" data-slot-id="${wk}-ant" onclick="handleSlotClick('${wk}-ant')"></div>
+          </div>
+          <div class="slot-row">
+            <div class="slot-lbl lbl-pos">Part of Speech</div>
+            <div class="slot-zone" id="slot-${wk}-pos" data-slot-id="${wk}-pos" onclick="handleSlotClick('${wk}-pos')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pool-section">
+      <div class="pool-row">
+        <span class="pool-lbl">품사</span>
+        <div class="pool-chips-inner" id="pos-pool"></div>
+      </div>
+      <div class="pool-row">
+        <span class="pool-lbl">동의어/반의어</span>
+        <div class="pool-chips-inner" id="sa-pool"></div>
+      </div>
+      <div class="sel-badge" id="sel-badge"></div>
+    </div>`;
+    ['syn','ant','pos'].forEach(t=>{const sid=wk+'-'+t;if(slotContents[sid])updateSlot(sid);});
+    updatePool();
+    requestAnimationFrame(()=>requestAnimationFrame(initCanvas));
+    return;
+  }
+
+  if(phase==='result'){
+    document.getElementById('progressFill').style.width='100%';
+    const{allOk,total,dictOk,dictTot,mapOk,mapTot,emoji,msg,rows}=buildResult();
+    app.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 14px;box-shadow:0 2px 0 var(--line)">
+      <div class="result-header">
+        <div style="font-size:.85rem;color:#8a7f6a">최종 결과 ${emoji} ${msg}</div>
+        <div class="result-score-big">${allOk} <span style="font-size:1.4rem;color:#8a7f6a">/ ${total}</span></div>
+        <div class="score-pills">
+          <span class="pill dict">받아쓰기 ${dictOk} / ${dictTot}</span>
+          <span class="pill match">매칭 ${mapOk} / ${mapTot}</span>
+        </div>
+      </div>
+      <div class="res-table-wrap">
+        <table class="res-table">
+          <thead><tr>
+            <th>#</th>
+            <th>Spelling</th>
+            <th style="color:var(--rust)">Synonym</th>
+            <th style="color:var(--navy)">Antonym</th>
+            <th style="color:var(--good)">품사</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      <button class="restart-btn" onclick="location.reload()">다시 시작</button>
+    </div>`;
+  }
+}
+
+speechSynthesis.onvoiceschanged=()=>{};speechSynthesis.getVoices();
+render();
+</script>
+</body>
+</html>
