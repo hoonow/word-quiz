@@ -100,7 +100,23 @@ header h1{font-size:1.1rem;margin:0;}
 .chip-remove{opacity:.55;font-weight:bold;margin-left:1px;}
 .sel-badge{font-size:.72rem;color:var(--gold);text-align:center;min-height:16px;margin-top:4px;}
 .start-btn{margin-top:16px;background:var(--rust);color:#fff;border:none;
-  padding:15px 32px;border-radius:10px;font-size:1rem;font-weight:bold;cursor:pointer;}
+  padding:15px 32px;border-radius:10px;font-size:1rem;font-weight:bold;cursor:pointer;display:block;margin-left:auto;margin-right:auto;}
+.def-quiz-btn{margin-top:12px;background:var(--navy);color:#fff;border:none;
+  padding:14px 32px;border-radius:10px;font-size:.95rem;font-weight:bold;cursor:pointer;display:block;margin-left:auto;margin-right:auto;}
+
+/* ── Definition quiz ── */
+.def-question{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:20px 18px;text-align:center;max-width:560px;margin:0 auto 18px;}
+.def-word{font-size:1.6rem;font-weight:bold;color:var(--navy);letter-spacing:1px;margin-bottom:10px;}
+.def-example{font-size:.95rem;color:#5c5345;font-style:italic;line-height:1.6;}
+.def-label{font-size:.8rem;color:#8a7f6a;margin-top:12px;font-weight:bold;}
+.def-choices{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:10px;}
+.def-choice{display:block;width:100%;text-align:left;padding:13px 16px;border-radius:10px;
+  border:1.5px solid var(--line);background:#fff;font-size:.92rem;font-family:inherit;cursor:pointer;line-height:1.5;}
+.def-choice:hover:not(.answered){border-color:var(--navy);background:#f0f4fa;}
+.def-choice.answered{cursor:default;}
+.def-choice.def-correct{border-color:var(--good);background:#eef8ee;color:var(--good);font-weight:bold;}
+.def-choice.def-wrong{border-color:var(--bad);background:#fdecea;color:var(--bad);font-weight:bold;}
 
 /* ── Result Table ── */
 .result-header{text-align:center;padding:14px 0 10px;}
@@ -134,25 +150,30 @@ header h1{font-size:1.1rem;margin:0;}
   font-size:.75rem;font-weight:bold;color:var(--ink);cursor:pointer;font-family:inherit;}
 .history-overlay{display:none;position:fixed;inset:0;background:rgba(30,25,20,.55);
   align-items:center;justify-content:center;z-index:10000;padding:16px;}
-.history-modal{background:var(--paper);border-radius:12px;max-width:480px;width:100%;
-  max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,.3);}
+.history-modal{background:var(--paper);border-radius:12px;max-width:640px;width:100%;
+  max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 30px rgba(0,0,0,.3);}
 .history-head{display:flex;align-items:center;justify-content:space-between;
-  padding:14px 16px;border-bottom:2px solid var(--ink);}
-.history-head h3{margin:0;font-size:1rem;}
-.history-close{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--ink);}
+  padding:16px 18px;border-bottom:2px solid var(--ink);}
+.history-head h3{margin:0;font-size:1.3rem;}
+.history-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--ink);}
 .history-delete{background:none;border:1px solid var(--bad);color:var(--bad);border-radius:8px;
-  padding:4px 9px;font-size:.72rem;font-weight:bold;cursor:pointer;font-family:inherit;}
-.history-body{overflow-y:auto;padding:10px 16px 16px;}
-.history-row{border-bottom:1px solid var(--line);padding:9px 0;cursor:pointer;}
+  padding:6px 12px;font-size:.85rem;font-weight:bold;cursor:pointer;font-family:inherit;}
+.history-body{overflow-y:auto;padding:14px 18px 18px;font-size:1.15rem;}
+.history-row{border-bottom:1px solid var(--line);padding:13px 0;cursor:pointer;}
 .history-row:last-child{border-bottom:none;}
 .history-row:hover{background:#f5f0e6;}
-.history-row-top{display:flex;justify-content:space-between;font-size:.85rem;font-weight:bold;}
-.history-row-top span{font-weight:normal;color:#8a7f6a;font-size:.78rem;}
-.history-row-score{font-size:.8rem;color:#5c5345;margin-top:3px;}
-.history-empty{text-align:center;color:#8a7f6a;font-size:.85rem;padding:20px 0;}
-.history-back{background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;
-  font-size:.78rem;font-weight:bold;color:var(--navy);cursor:pointer;font-family:inherit;margin-bottom:10px;}
-.history-detail-score{font-size:.85rem;font-weight:bold;margin-bottom:8px;}
+.history-row-top{display:flex;justify-content:space-between;font-size:1.05rem;font-weight:bold;}
+.history-row-top span{font-weight:normal;color:#8a7f6a;font-size:.95rem;}
+.history-row-score{font-size:.95rem;color:#5c5345;margin-top:5px;}
+.history-empty{text-align:center;color:#8a7f6a;font-size:1rem;padding:24px 0;}
+.history-back{background:none;border:1px solid var(--line);border-radius:8px;padding:7px 14px;
+  font-size:.9rem;font-weight:bold;color:var(--navy);cursor:pointer;font-family:inherit;margin-bottom:12px;}
+.history-detail-score{font-size:1.05rem;font-weight:bold;margin-bottom:10px;}
+.history-body .res-table{font-size:.95rem;}
+.history-body .res-table th{font-size:.85rem;padding:10px 8px;}
+.history-body .res-table td{padding:9px 7px;}
+.history-body .num{font-size:.88rem;}
+.history-body .cell-ans{font-size:.85rem;}
 </style>
 </head>
 <body>
@@ -181,21 +202,21 @@ header h1{font-size:1.1rem;margin:0;}
 </div>
 <script>
 const WORDS=[
-  {word:"inhabit",       pos:"verb", example:"A tiger family inhabited the large den in the forest.",                    syn:"reside",     ant:null},
-  {word:"unaware",       pos:"adj.", example:"The children were unaware of the danger of the thunderstorm.",             syn:"clueless",   ant:"aware"},
-  {word:"illegal",       pos:"adj.", example:"It is illegal to steal from others.",                                      syn:"unlawful",   ant:"legal"},
-  {word:"endangered",    pos:"adj.", example:"Many animals are becoming endangered due to habitat destruction.",         syn:"threatened", ant:null},
-  {word:"plumbing",      pos:"noun", example:"There was something wrong with the plumbing in our kitchen sink.",         syn:null,         ant:null},
-  {word:"squeal",        pos:"verb", example:"The children squealed while going down on the roller coaster.",            syn:"shriek",     ant:"whisper"},
-  {word:"loose",         pos:"adj.", example:"Do not walk around with loose shoelaces or you might trip and fall.",      syn:"unsecured",  ant:"tight"},
-  {word:"limp",          pos:"verb", example:"Mary began to limp after injuring her leg.",                               syn:"hobble",     ant:null},
-  {word:"tame",          pos:"verb", example:"The circus leader tames animals for the circus.",                          syn:"control",    ant:null},
-  {word:"attractive",    pos:"adj.", example:"Many people find my neighborhood attractive and quiet.",                   syn:"appealing",  ant:"ugly"},
-  {word:"endearment",    pos:"noun", example:"My parents like to whisper endearments to me before they put me to bed.",  syn:"praise",     ant:null},
-  {word:"experiment",    pos:"noun", example:"We did experiments in science class to see if objects sink or float in water.", syn:null,     ant:null},
-  {word:"investigation", pos:"noun", example:"Tia started an investigation to find out why there was paint on a tree.",  syn:"study",      ant:null},
-  {word:"method",        pos:"noun", example:"My mom has a special method she uses to bake cookies.",                    syn:"strategy",   ant:null},
-  {word:"procedure",     pos:"noun", example:"Follow the proper procedure for leaving the building during a fire drill.", syn:"method",     ant:null},
+  {word:"inhabit",       pos:"verb", example:"A tiger family inhabited the large den in the forest.",                    syn:"reside",     ant:null,        def:"to live in a place"},
+  {word:"unaware",       pos:"adj.", example:"The children were unaware of the danger of the thunderstorm.",             syn:"clueless",   ant:"aware",     def:"not knowing what is happening"},
+  {word:"illegal",       pos:"adj.", example:"It is illegal to steal from others.",                                      syn:"unlawful",   ant:"legal",     def:"not allowed by law or rules"},
+  {word:"endangered",    pos:"adj.", example:"Many animals are becoming endangered due to habitat destruction.",         syn:"threatened", ant:null,        def:"(of a species) in danger of being harmed, lost, unsuccessful, etc."},
+  {word:"plumbing",      pos:"noun", example:"There was something wrong with the plumbing in our kitchen sink.",         syn:null,         ant:null,        def:"the water pipes and similar systems in a building"},
+  {word:"squeal",        pos:"verb", example:"The children squealed while going down on the roller coaster.",            syn:"shriek",     ant:"whisper",   def:"to make a long, very high sound or cry"},
+  {word:"loose",         pos:"adj.", example:"Do not walk around with loose shoelaces or you might trip and fall.",      syn:"unsecured",  ant:"tight",     def:"not firmly held or fastened in place"},
+  {word:"limp",          pos:"verb", example:"Mary began to limp after injuring her leg.",                               syn:"hobble",     ant:null,        def:"to walk with an irregular step, especially because of a hurt foot or leg"},
+  {word:"tame",          pos:"verb", example:"The circus leader tames animals for the circus.",                          syn:"control",    ant:null,        def:"to train a wild animal"},
+  {word:"attractive",    pos:"adj.", example:"Many people find my neighborhood attractive and quiet.",                   syn:"appealing",  ant:"ugly",      def:"having a pleasing appearance"},
+  {word:"endearment",    pos:"noun", example:"My parents like to whisper endearments to me before they put me to bed.",  syn:"praise",     ant:null,        def:"a word or phrase that is used to show love or adoration"},
+  {word:"experiment",    pos:"noun", example:"We did experiments in science class to see if objects sink or float in water.", syn:null,     ant:null,        def:"a test done in order to learn something or discover if something is true"},
+  {word:"investigation", pos:"noun", example:"Tia started an investigation to find out why there was paint on a tree.",  syn:"study",      ant:null,        def:"the act of examining something carefully to discover the truth"},
+  {word:"method",        pos:"noun", example:"My mom has a special method she uses to bake cookies.",                    syn:"strategy",   ant:null,        def:"a way of doing something"},
+  {word:"procedure",     pos:"noun", example:"Follow the proper procedure for leaving the building during a fire drill.", syn:"method",     ant:null,        def:"steps that must be taken to do something"},
 ];
 const SA_ALL=['reside','clueless','unlawful','threatened','shriek','unsecured','hobble','control','appealing','praise','study','strategy','method','aware','legal','whisper','tight','ugly'];
 const POS_VALS=['noun','verb','adj.','adv.'];
@@ -303,6 +324,7 @@ let slotContents={},poolSet=new Set();
 let tapSel=null,pnd=null,ghost=null,isDrag=false;
 let resultSaved=false,historyList=[];
 let quizWords=WORDS,isReview=false;
+let defOrder=[],defIdx=0,defScore=0,defChoices=[],defAnswered=null;
 
 // ── Result DB (shared Supabase-backed API also used by the portfolio dashboard) ──
 const API_BASE='https://portfolio-dashboard-hmwa.onrender.com';
@@ -400,6 +422,36 @@ function startQuiz(){
   wordOrder=shuffle(quizWords.map((_,i)=>i));
   slotContents={};poolSet=new Set(shuffle([...SA_ALL]));
   wordResults=[];completedWords=[];resultSaved=false;wIdx=0;subPhase='input';phase='quiz';render();
+}
+
+// ── Definition quiz (multiple choice, meaning only) ──────────────
+function startDefQuiz(){
+  defOrder=shuffle(WORDS.map((_,i)=>i));
+  defIdx=0;defScore=0;phase='defquiz';render();
+}
+function buildDefChoices(correctIdx){
+  const correct=WORDS[correctIdx];
+  const distractors=shuffle(WORDS.filter((_,i)=>i!==correctIdx)).slice(0,3);
+  return shuffle([correct,...distractors]).map(w=>w.def);
+}
+function defSelect(idx){
+  if(defAnswered!==null)return;
+  defAnswered=idx;
+  const w=WORDS[defOrder[defIdx]];
+  const correctIdx=defChoices.indexOf(w.def);
+  if(idx===correctIdx)defScore++;
+  defChoices.forEach((c,i)=>{
+    const btn=document.getElementById('def-choice-'+i);
+    btn.classList.add('answered');
+    if(i===correctIdx)btn.classList.add('def-correct');
+    else if(i===idx)btn.classList.add('def-wrong');
+  });
+  document.getElementById('defNextBtn').style.display='block';
+}
+function nextDefQuestion(){
+  defIdx++;
+  if(defIdx>=defOrder.length){phase='defresult';render();return;}
+  render();
 }
 function getWrongWords(){
   const dictMap={};wordResults.forEach(r=>dictMap[r.word]=r.dictOk);
@@ -689,6 +741,42 @@ function render(){
         왼쪽: 단어 받아쓰기 (펜으로)<br>오른쪽: 동의어 · 반의어 · 품사 드래그 배치<br>15단어 완료 후 자동 채점
       </p>
       <button class="start-btn" onclick="startQuiz()">시험 시작 →</button>
+      <button class="def-quiz-btn" onclick="startDefQuiz()">📘 뜻 문제 →</button>
+    </div>`;
+    return;
+  }
+
+  if(phase==='defquiz'){
+    document.getElementById('progressFill').style.width=Math.round((defIdx/WORDS.length)*100)+'%';
+    const w=WORDS[defOrder[defIdx]];
+    defChoices=buildDefChoices(defOrder[defIdx]);
+    defAnswered=null;
+    app.innerHTML=`
+    <div class="stage-label" style="text-align:center;display:block;margin-bottom:14px;">${defIdx+1} / ${WORDS.length} 문제 · 뜻 맞추기</div>
+    <div class="def-question">
+      <div class="def-word">${w.word}</div>
+      <div class="def-example">"${w.example}"</div>
+      <div class="def-label">이 단어의 뜻은 무엇일까요?</div>
+    </div>
+    <div class="def-choices">
+      ${defChoices.map((c,i)=>`<button class="def-choice" id="def-choice-${i}" onclick="defSelect(${i})">${['①','②','③','④'][i]} ${c}</button>`).join('')}
+    </div>
+    <button class="next-btn" id="defNextBtn" onclick="nextDefQuestion()" style="display:none;max-width:560px;margin:14px auto 0;">${defIdx+1<WORDS.length?'다음 문제 →':'결과 보기 →'}</button>
+    `;
+    return;
+  }
+
+  if(phase==='defresult'){
+    document.getElementById('progressFill').style.width='100%';
+    const emoji=defScore===WORDS.length?'🌟':defScore>=WORDS.length*.8?'👍':'💪';
+    const msg=defScore===WORDS.length?'완벽해요!':defScore>=WORDS.length*.8?'잘했어요!':'다시 도전!';
+    app.innerHTML=`
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 14px;box-shadow:0 2px 0 var(--line);text-align:center;">
+      <div class="result-header">
+        <div style="font-size:.85rem;color:#8a7f6a">뜻 문제 결과 ${emoji} ${msg}</div>
+        <div class="result-score-big">${defScore} <span style="font-size:1.4rem;color:#8a7f6a">/ ${WORDS.length}</span></div>
+      </div>
+      <button class="restart-btn" onclick="phase='start';render();">처음으로</button>
     </div>`;
     return;
   }
