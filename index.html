@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>영단어 시험 — Week 20</title>
+<title>영단어 시험 — Week 21</title>
 <style>
 :root{--ink:#2b2520;--paper:#faf6ee;--card:#fffdf8;--rust:#c1502e;--navy:#3a4d6b;--gold:#d9a441;--line:#e6ddc9;--good:#4a7c4e;--bad:#b3413a;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -139,12 +139,16 @@ header h1{font-size:1.1rem;margin:0;}
 .history-head h3{margin:0;font-size:1rem;}
 .history-close{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--ink);}
 .history-body{overflow-y:auto;padding:10px 16px 16px;}
-.history-row{border-bottom:1px solid var(--line);padding:9px 0;}
+.history-row{border-bottom:1px solid var(--line);padding:9px 0;cursor:pointer;}
 .history-row:last-child{border-bottom:none;}
+.history-row:hover{background:#f5f0e6;}
 .history-row-top{display:flex;justify-content:space-between;font-size:.85rem;font-weight:bold;}
 .history-row-top span{font-weight:normal;color:#8a7f6a;font-size:.78rem;}
 .history-row-score{font-size:.8rem;color:#5c5345;margin-top:3px;}
 .history-empty{text-align:center;color:#8a7f6a;font-size:.85rem;padding:20px 0;}
+.history-back{background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;
+  font-size:.78rem;font-weight:bold;color:var(--navy);cursor:pointer;font-family:inherit;margin-bottom:10px;}
+.history-detail-score{font-size:.85rem;font-weight:bold;margin-bottom:8px;}
 </style>
 </head>
 <body>
@@ -153,7 +157,7 @@ header h1{font-size:1.1rem;margin:0;}
     <h1>📝 영단어 시험</h1>
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="history-btn" onclick="showHistory()">📊 기록</button>
-      <span class="stamp">WEEK 20</span>
+      <span class="stamp">WEEK 21</span>
     </div>
   </header>
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -167,23 +171,23 @@ header h1{font-size:1.1rem;margin:0;}
 </div>
 <script>
 const WORDS=[
-  {word:"treasure",   pos:"noun", example:"The pirate's treasure is hidden on the island.",                              syn:null,          ant:null},
-  {word:"accumulate", pos:"verb", example:"My family and I were surprised at all the things we accumulated.",            syn:"gather",      ant:null},
-  {word:"adopt",      pos:"verb", example:"My mom and dad adopted a puppy and a cat from the animal shelter.",          syn:null,          ant:"abandon"},
-  {word:"wealth",     pos:"noun", example:"Aiden acquired great wealth and many houses in the town.",                    syn:"assets",      ant:"debt"},
-  {word:"reprove",    pos:"verb", example:"The father reproved his son for making a mess.",                              syn:"reprimand",   ant:"praise"},
-  {word:"hesitate",   pos:"verb", example:"Sue typed some words and then hesitated before typing again.",                syn:"pause",       ant:null},
-  {word:"triumph",    pos:"noun", example:"Becoming a famous actress was Ashley's personal triumph.",                     syn:"success",     ant:"failure"},
-  {word:"sacrifice",  pos:"verb", example:"I sacrificed my playtime during recess and helped a classmate study.",       syn:null,          ant:null},
-  {word:"appetizing", pos:"adj.", example:"That steak with vegetables was very appetizing.",                             syn:"tasty",       ant:null},
-  {word:"compound",   pos:"noun", example:"The homemade juice is a compound of various fresh fruits.",                   syn:"combination", ant:null},
-  {word:"pleasantry", pos:"noun", example:"The two businessmen shared pleasantries.",                                    syn:null,          ant:null},
-  {word:"model",      pos:"noun", example:"You can see models of old ships in the museum.",                              syn:"sample",      ant:null},
-  {word:"compare",    pos:"verb", example:"Some people compare the singer's voice to the voice of an angel.",           syn:null,          ant:"contrast"},
-  {word:"label",      pos:"verb", example:"I labeled all the folders by subject.",                                       syn:"mark",        ant:null},
-  {word:"directions", pos:"noun", example:"We were lost, so I looked at my phone's navigation system for directions.", syn:null,          ant:null},
+  {word:"inhabit",       pos:"verb", example:"A tiger family inhabited the large den in the forest.",                    syn:"reside",     ant:null},
+  {word:"unaware",       pos:"adj.", example:"The children were unaware of the danger of the thunderstorm.",             syn:"clueless",   ant:"aware"},
+  {word:"illegal",       pos:"adj.", example:"It is illegal to steal from others.",                                      syn:"unlawful",   ant:"legal"},
+  {word:"endangered",    pos:"adj.", example:"Many animals are becoming endangered due to habitat destruction.",         syn:"threatened", ant:null},
+  {word:"plumbing",      pos:"noun", example:"There was something wrong with the plumbing in our kitchen sink.",         syn:null,         ant:null},
+  {word:"squeal",        pos:"verb", example:"The children squealed while going down on the roller coaster.",            syn:"shriek",     ant:"whisper"},
+  {word:"loose",         pos:"adj.", example:"Do not walk around with loose shoelaces or you might trip and fall.",      syn:"unsecured",  ant:"tight"},
+  {word:"limp",          pos:"verb", example:"Mary began to limp after injuring her leg.",                               syn:"hobble",     ant:null},
+  {word:"tame",          pos:"verb", example:"The circus leader tames animals for the circus.",                          syn:"control",    ant:null},
+  {word:"attractive",    pos:"adj.", example:"Many people find my neighborhood attractive and quiet.",                   syn:"appealing",  ant:"ugly"},
+  {word:"endearment",    pos:"noun", example:"My parents like to whisper endearments to me before they put me to bed.",  syn:"praise",     ant:null},
+  {word:"experiment",    pos:"noun", example:"We did experiments in science class to see if objects sink or float in water.", syn:null,     ant:null},
+  {word:"investigation", pos:"noun", example:"Tia started an investigation to find out why there was paint on a tree.",  syn:"study",      ant:null},
+  {word:"method",        pos:"noun", example:"My mom has a special method she uses to bake cookies.",                    syn:"strategy",   ant:null},
+  {word:"procedure",     pos:"noun", example:"Follow the proper procedure for leaving the building during a fire drill.", syn:"method",     ant:null},
 ];
-const SA_ALL=['gather','assets','reprimand','pause','success','tasty','combination','sample','mark','abandon','debt','praise','failure','contrast'];
+const SA_ALL=['reside','clueless','unlawful','threatened','shriek','unsecured','hobble','control','appealing','praise','study','strategy','method','aware','legal','whisper','tight','ugly'];
 const POS_VALS=['noun','verb','adj.','adv.'];
 const isPOS=v=>POS_VALS.includes(v);
 
@@ -287,17 +291,27 @@ let phase='start',wordOrder=[],wIdx=0,subPhase='input';
 let wordResults=[],completedWords=[];
 let slotContents={},poolSet=new Set();
 let tapSel=null,pnd=null,ghost=null,isDrag=false;
-let resultSaved=false;
+let resultSaved=false,historyList=[];
 
 // ── Result DB (shared Supabase-backed API also used by the portfolio dashboard) ──
 const API_BASE='https://portfolio-dashboard-hmwa.onrender.com';
+function buildDetailData(){
+  const dictMap={};wordResults.forEach(r=>dictMap[r.word]=r.dictOk);
+  return WORDS.map(w=>({
+    word:w.word,
+    dictOk:!!dictMap[w.word],
+    syn:{has:!!w.syn, user:slotContents[w.word+'-syn']||null, correct:w.syn||null},
+    ant:{has:!!w.ant, user:slotContents[w.word+'-ant']||null, correct:w.ant||null},
+    pos:{has:true, user:slotContents[w.word+'-pos']||null, correct:w.pos}
+  }));
+}
 async function saveResultToDB(r){
   if(resultSaved)return;
   resultSaved=true;
   try{
     await fetch(API_BASE+'/quiz/results',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({allOk:r.allOk,total:r.total,dictOk:r.dictOk,dictTot:r.dictTot,mapOk:r.mapOk,mapTot:r.mapTot})
+      body:JSON.stringify({allOk:r.allOk,total:r.total,dictOk:r.dictOk,dictTot:r.dictTot,mapOk:r.mapOk,mapTot:r.mapTot,details:buildDetailData()})
     });
   }catch(e){/* 오프라인 등으로 저장 실패해도 화면의 결과 자체는 이미 보이므로 조용히 무시 */}
 }
@@ -308,16 +322,51 @@ async function showHistory(){
   try{
     const res=await fetch(API_BASE+'/quiz/results');
     const data=await res.json();
-    const list=(data.results||[]).slice().reverse();
-    if(!list.length){body.innerHTML='<div class="history-empty">아직 저장된 기록이 없습니다.</div>';return;}
-    body.innerHTML=list.map(r=>`
-      <div class="history-row">
-        <div class="history-row-top"><b>${r.label||''}</b><span>${r.date||''} ${r.time||''}</span></div>
-        <div class="history-row-score">${r.allOk} / ${r.total} · 받아쓰기 ${r.dictOk}/${r.dictTot} · 매칭 ${r.mapOk}/${r.mapTot}</div>
-      </div>`).join('');
+    historyList=(data.results||[]).slice().reverse();
+    renderHistoryList();
   }catch(e){
     body.innerHTML='<div class="history-empty">불러오기 실패했습니다. 인터넷 연결을 확인하세요.</div>';
   }
+}
+function renderHistoryList(){
+  const body=document.getElementById('historyBody');
+  if(!historyList.length){body.innerHTML='<div class="history-empty">아직 저장된 기록이 없습니다.</div>';return;}
+  body.innerHTML=historyList.map((r,i)=>`
+    <div class="history-row" onclick="showHistoryDetail(${i})">
+      <div class="history-row-top"><b>${r.label||''}</b><span>${r.date||''} ${r.time||''}</span></div>
+      <div class="history-row-score">${r.allOk} / ${r.total} · 받아쓰기 ${r.dictOk}/${r.dictTot} · 매칭 ${r.mapOk}/${r.mapTot}</div>
+    </div>`).join('');
+}
+function mkHistoryCell(cell){
+  if(!cell.has){
+    if(!cell.user) return `<span class="cell-na">—</span>`;
+    return `<span class="cell-no">${cell.user} ✗<span class="cell-ans">정답 없음</span></span>`;
+  }
+  if(!cell.user) return `<span class="cell-no">없음 ✗<span class="cell-ans">${cell.correct}</span></span>`;
+  const ok=cell.user.toLowerCase()===cell.correct.toLowerCase();
+  if(ok) return `<span class="cell-ok">${cell.user} ✓</span>`;
+  return `<span class="cell-no">${cell.user} ✗<span class="cell-ans">${cell.correct}</span></span>`;
+}
+function showHistoryDetail(idx){
+  const r=historyList[idx];
+  const body=document.getElementById('historyBody');
+  const head=`<button class="history-back" onclick="renderHistoryList()">← 목록으로</button>
+    <div class="history-detail-score">${r.label||''} · ${r.date||''} ${r.time||''} · ${r.allOk} / ${r.total}</div>`;
+  if(!r.details||!r.details.length){
+    body.innerHTML=head+'<div class="history-empty">이 기록은 상세 채점 정보가 저장되지 않았습니다.</div>';
+    return;
+  }
+  const rows=r.details.map((d,i)=>`<tr>
+    <td><span class="num">${i+1}</span></td>
+    <td><span class="${d.dictOk?'spell-ok':'spell-no'}">${d.word} ${d.dictOk?'✓':'✗'}</span></td>
+    <td>${mkHistoryCell(d.syn)}</td>
+    <td>${mkHistoryCell(d.ant)}</td>
+    <td>${mkHistoryCell(d.pos)}</td>
+  </tr>`).join('');
+  body.innerHTML=head+`<div class="res-table-wrap"><table class="res-table">
+    <thead><tr><th>#</th><th>Spelling</th><th style="color:var(--rust)">Synonym</th><th style="color:var(--navy)">Antonym</th><th style="color:var(--good)">품사</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
 }
 function closeHistory(){document.getElementById('historyOverlay').style.display='none';}
 
@@ -590,7 +639,7 @@ function render(){
   if(phase==='start'){
     document.getElementById('progressFill').style.width='0%';
     app.innerHTML=`<div style="text-align:center;padding:22px 8px">
-      <div style="font-size:2.4rem">📖</div><h2>WEEK 20 영단어 시험</h2>
+      <div style="font-size:2.4rem">📖</div><h2>WEEK 21 영단어 시험</h2>
       <p style="color:#5c5345;line-height:1.8;font-size:.92rem">
         왼쪽: 단어 받아쓰기 (펜으로)<br>오른쪽: 동의어 · 반의어 · 품사 드래그 배치<br>15단어 완료 후 자동 채점
       </p>
