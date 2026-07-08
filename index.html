@@ -126,6 +126,8 @@ header h1{font-size:1.1rem;margin:0;}
 .cell-na{color:#c5bba8;}
 .restart-btn{display:block;margin:16px auto 0;background:var(--navy);color:#fff;border:none;
   padding:12px 28px;border-radius:10px;font-size:.95rem;font-weight:bold;cursor:pointer;}
+.review-btn{display:block;width:100%;margin-top:16px;background:var(--rust);color:#fff;border:none;
+  padding:13px 20px;border-radius:10px;font-size:.95rem;font-weight:bold;cursor:pointer;font-family:inherit;}
 
 /* ── History (past results) ── */
 .history-btn{background:none;border:1px solid var(--ink);border-radius:8px;padding:5px 10px;
@@ -138,6 +140,8 @@ header h1{font-size:1.1rem;margin:0;}
   padding:14px 16px;border-bottom:2px solid var(--ink);}
 .history-head h3{margin:0;font-size:1rem;}
 .history-close{background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--ink);}
+.history-delete{background:none;border:1px solid var(--bad);color:var(--bad);border-radius:8px;
+  padding:4px 9px;font-size:.72rem;font-weight:bold;cursor:pointer;font-family:inherit;}
 .history-body{overflow-y:auto;padding:10px 16px 16px;}
 .history-row{border-bottom:1px solid var(--line);padding:9px 0;cursor:pointer;}
 .history-row:last-child{border-bottom:none;}
@@ -165,7 +169,13 @@ header h1{font-size:1.1rem;margin:0;}
 </div>
 <div class="history-overlay" id="historyOverlay">
   <div class="history-modal">
-    <div class="history-head"><h3>지난 시험 기록</h3><button class="history-close" onclick="closeHistory()">✕</button></div>
+    <div class="history-head">
+      <h3>지난 시험 기록</h3>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <button class="history-delete" onclick="deleteAllHistory()">🗑 전체 삭제</button>
+        <button class="history-close" onclick="closeHistory()">✕</button>
+      </div>
+    </div>
     <div class="history-body" id="historyBody"></div>
   </div>
 </div>
@@ -292,12 +302,13 @@ let wordResults=[],completedWords=[];
 let slotContents={},poolSet=new Set();
 let tapSel=null,pnd=null,ghost=null,isDrag=false;
 let resultSaved=false,historyList=[];
+let quizWords=WORDS,isReview=false;
 
 // ── Result DB (shared Supabase-backed API also used by the portfolio dashboard) ──
 const API_BASE='https://portfolio-dashboard-hmwa.onrender.com';
 function buildDetailData(){
   const dictMap={};wordResults.forEach(r=>dictMap[r.word]=r.dictOk);
-  return WORDS.map(w=>({
+  return quizWords.map(w=>({
     word:w.word,
     dictOk:!!dictMap[w.word],
     syn:{has:!!w.syn, user:slotContents[w.word+'-syn']||null, correct:w.syn||null},
@@ -306,7 +317,7 @@ function buildDetailData(){
   }));
 }
 async function saveResultToDB(r){
-  if(resultSaved)return;
+  if(resultSaved||isReview)return;
   resultSaved=true;
   try{
     await fetch(API_BASE+'/quiz/results',{
@@ -369,13 +380,47 @@ function showHistoryDetail(idx){
   </table></div>`;
 }
 function closeHistory(){document.getElementById('historyOverlay').style.display='none';}
+async function deleteAllHistory(){
+  const pw=prompt('전체 기록을 삭제하려면 비밀번호를 입력하세요.');
+  if(pw===null)return;
+  if(pw!=='24680'){alert('비밀번호가 틀렸습니다.');return;}
+  try{
+    await fetch(API_BASE+'/quiz/results',{method:'DELETE'});
+    showHistory();
+  }catch(e){
+    alert('삭제에 실패했습니다. 인터넷 연결을 확인하세요.');
+  }
+}
 
 function shuffle(a){const b=a.slice();for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;}
 function esc(s){return s.replace(/'/g,"\\'");}
 
 function startQuiz(){
-  wordOrder=shuffle(WORDS.map((_,i)=>i));
+  quizWords=WORDS;isReview=false;
+  wordOrder=shuffle(quizWords.map((_,i)=>i));
   slotContents={};poolSet=new Set(shuffle([...SA_ALL]));
+  wordResults=[];completedWords=[];resultSaved=false;wIdx=0;subPhase='input';phase='quiz';render();
+}
+function getWrongWords(){
+  const dictMap={};wordResults.forEach(r=>dictMap[r.word]=r.dictOk);
+  return quizWords.filter(w=>{
+    if(!dictMap[w.word])return true;
+    const synVal=slotContents[w.word+'-syn'],antVal=slotContents[w.word+'-ant'],posVal=slotContents[w.word+'-pos'];
+    if(w.syn){if(!synVal||synVal.toLowerCase()!==w.syn.toLowerCase())return true;}
+    else if(synVal){return true;}
+    if(w.ant){if(!antVal||antVal.toLowerCase()!==w.ant.toLowerCase())return true;}
+    else if(antVal){return true;}
+    if(!posVal||posVal.toLowerCase()!==w.pos.toLowerCase())return true;
+    return false;
+  });
+}
+function startReview(list){
+  quizWords=list;isReview=true;
+  wordOrder=shuffle(list.map((_,i)=>i));
+  slotContents={};
+  const pool=[];
+  list.forEach(w=>{if(w.syn)pool.push(w.syn);if(w.ant)pool.push(w.ant);});
+  poolSet=new Set(shuffle(pool));
   wordResults=[];completedWords=[];resultSaved=false;wIdx=0;subPhase='input';phase='quiz';render();
 }
 function showConfirm(){
@@ -413,7 +458,7 @@ function gradeMatchSlots(w){
   });
 }
 function revealWord(){
-  const w=WORDS[wordOrder[wIdx]];
+  const w=quizWords[wordOrder[wIdx]];
   document.getElementById('answerReveal').style.display='block';
   document.getElementById('gradeRow').style.display='flex';
   document.getElementById('checkRow').style.display='none';
@@ -426,12 +471,12 @@ function revealWord(){
   speakWord3x(w.word,'soundBtn');
 }
 function gradeDictation(ok){
-  wordResults.push({word:WORDS[wordOrder[wIdx]].word,dictOk:ok});
+  wordResults.push({word:quizWords[wordOrder[wIdx]].word,dictOk:ok});
   document.getElementById('gradeRow').style.display='none';
   document.getElementById('nextBtn').style.display='block';
 }
 function nextWord(){
-  completedWords.push(WORDS[wordOrder[wIdx]].word);
+  completedWords.push(quizWords[wordOrder[wIdx]].word);
   wIdx++;
   if(wIdx>=wordOrder.length){phase='result';render();return;}
   subPhase='input';tapSel=null;render();
@@ -440,7 +485,7 @@ function prevWord(){
   if(wIdx<=0)return;
   wIdx--;
   completedWords.length=wIdx;
-  const wk=WORDS[wordOrder[wIdx]].word;
+  const wk=quizWords[wordOrder[wIdx]].word;
   wordResults=wordResults.filter(r=>r.word!==wk);
   ['syn','ant','pos'].forEach(t=>{
     const sid=wk+'-'+t,val=slotContents[sid];
@@ -587,9 +632,9 @@ function updateSlot(slotId){
 // ── Result ─────────────────────────────────────────────────────
 function buildResult(){
   const dictMap={};wordResults.forEach(r=>dictMap[r.word]=r.dictOk);
-  let dictOk=0,dictTot=WORDS.length,mapOk=0,mapTot=0;
+  let dictOk=0,dictTot=quizWords.length,mapOk=0,mapTot=0;
   wordResults.forEach(r=>{if(r.dictOk)dictOk++;});
-  WORDS.forEach(w=>{
+  quizWords.forEach(w=>{
     if(w.syn){mapTot++;if((slotContents[w.word+'-syn']||'').toLowerCase()===w.syn.toLowerCase())mapOk++;}
     else if(slotContents[w.word+'-syn']){mapTot++;}
     if(w.ant){mapTot++;if((slotContents[w.word+'-ant']||'').toLowerCase()===w.ant.toLowerCase())mapOk++;}
@@ -600,8 +645,8 @@ function buildResult(){
   const emoji=allOk===total?'🌟':allOk>=total*.8?'👍':'💪';
   const msg=allOk===total?'완벽해요!':allOk>=total*.8?'잘했어요!':'다시 도전!';
 
-  // Build table rows (WORDS order, 1-15)
-  const rows=WORDS.map((w,i)=>{
+  // Build table rows (quizWords order)
+  const rows=quizWords.map((w,i)=>{
     const dOk=dictMap[w.word];
     const spellCell=`<span class="${dOk?'spell-ok':'spell-no'}">${w.word} ${dOk?'✓':'✗'}</span>`;
 
@@ -649,13 +694,13 @@ function render(){
   }
 
   if(phase==='quiz'){
-    const pct=Math.round((wIdx/WORDS.length)*100);
+    const pct=Math.round((wIdx/quizWords.length)*100);
     document.getElementById('progressFill').style.width=pct+'%';
-    const w=WORDS[wordOrder[wIdx]],wk=w.word;
+    const w=quizWords[wordOrder[wIdx]],wk=w.word;
     app.innerHTML=`
     <div class="stage-nav">
       <button class="prev-btn" onclick="prevWord()" ${wIdx===0?'disabled':''}>← 이전 단어</button>
-      <div class="stage-label">${wIdx+1} / ${WORDS.length} 단어</div>
+      <div class="stage-label">${wIdx+1} / ${quizWords.length} 단어${isReview?' · 복습':''}</div>
     </div>
     <div class="top-btns">
       <button class="top-btn sound" id="soundBtn" onclick="speakWord3x('${esc(wk)}','soundBtn')">🔊 발음 3회<span class="spin"></span></button>
@@ -677,7 +722,7 @@ function render(){
           <label class="confirm-check"><input type="checkbox" id="confirmCheck" onchange="onConfirmCheck()"> Synonym · Antonym · Part of Speech 모두 입력했나요?</label>
           <button class="check-btn" id="confirmBtn" onclick="revealWord()" disabled>확인 →</button>
         </div>
-        <button class="next-btn" id="nextBtn" onclick="nextWord()">${wIdx+1<WORDS.length?'다음 단어 →':'결과 보기 →'}</button>
+        <button class="next-btn" id="nextBtn" onclick="nextWord()">${wIdx+1<quizWords.length?'다음 단어 →':'결과 보기 →'}</button>
       </div>
       <div class="mid-panel">
         <div class="slot-group">
@@ -697,7 +742,7 @@ function render(){
       </div>
       <div class="side-panel">
         <div class="completed-box">
-          <div class="completed-lbl">완료 ${completedWords.length} / ${WORDS.length}</div>
+          <div class="completed-lbl">완료 ${completedWords.length} / ${quizWords.length}</div>
           <div class="completed-list">${completedWords.length?completedWords.map((cw,i)=>`<span class="completed-chip">${i+1}. ${cw}</span>`).join(''):'<span class="completed-empty">아직 완료한 단어 없음</span>'}</div>
         </div>
       </div>
@@ -724,10 +769,11 @@ function render(){
     const result=buildResult();
     const{allOk,total,dictOk,dictTot,mapOk,mapTot,emoji,msg,rows}=result;
     saveResultToDB(result);
+    const wrongWords=getWrongWords();
     app.innerHTML=`
     <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 14px;box-shadow:0 2px 0 var(--line)">
       <div class="result-header">
-        <div style="font-size:.85rem;color:#8a7f6a">최종 결과 ${emoji} ${msg}</div>
+        <div style="font-size:.85rem;color:#8a7f6a">${isReview?'복습 결과':'최종 결과'} ${emoji} ${msg}</div>
         <div class="result-score-big">${allOk} <span style="font-size:1.4rem;color:#8a7f6a">/ ${total}</span></div>
         <div class="score-pills">
           <span class="pill dict">받아쓰기 ${dictOk} / ${dictTot}</span>
@@ -746,6 +792,7 @@ function render(){
           <tbody>${rows}</tbody>
         </table>
       </div>
+      ${wrongWords.length?`<button class="review-btn" onclick="startReview(getWrongWords())">🔁 틀린 문제(${wrongWords.length}개) 복습하기</button>`:''}
       <button class="restart-btn" onclick="location.reload()">다시 시작</button>
     </div>`;
   }
