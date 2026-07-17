@@ -250,10 +250,20 @@ async function getDictUrl(word){
   }catch{return(audioCache[word]=null);}
 }
 function playUrl(url){return new Promise(r=>{const a=new Audio(url);a.onended=r;a.onerror=r;a.play().catch(r);});}
+function getVoicesAsync(){
+  return new Promise(resolve=>{
+    const vs=speechSynthesis.getVoices();
+    if(vs.length){resolve(vs);return;}
+    let done=false;
+    const fin=()=>{if(!done){done=true;resolve(speechSynthesis.getVoices());}};
+    speechSynthesis.addEventListener('voiceschanged',fin,{once:true});
+    setTimeout(fin,1000);
+  });
+}
 async function wSpeak(text){
+  const vs=await getVoicesAsync();
   return new Promise(r=>{
     const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
-    const vs=speechSynthesis.getVoices();
     const b=vs.find(v=>v.lang==='en-US')||vs.find(v=>v.lang.startsWith('en'));
     if(b)u.voice=b;u.onend=r;u.onerror=r;speechSynthesis.cancel();speechSynthesis.speak(u);
   });
@@ -265,7 +275,7 @@ async function playOnce(text){
     const fin=s=>{if(!done){done=true;resolve(s);}};
     a.oncanplay=()=>a.play().then(()=>{}).catch(()=>fin(false));
     a.onended=()=>fin(true);a.onerror=()=>fin(false);
-    setTimeout(()=>fin(false),4000);a.load();
+    setTimeout(()=>fin(false),6000);a.load();
   });
   if(ok)return;
   // 2. Dict API (single word)
@@ -292,14 +302,19 @@ async function playOnceKorean(text){
     const fin=s=>{if(!done){done=true;resolve(s);}};
     a.oncanplay=()=>a.play().then(()=>{}).catch(()=>fin(false));
     a.onended=()=>fin(true);a.onerror=()=>fin(false);
-    setTimeout(()=>fin(false),4000);a.load();
+    setTimeout(()=>fin(false),6000);a.load();
   });
   if(ok)return;
+  // Web Speech fallback: only speak if a real Korean voice is installed on
+  // this device — without one, engines mispronounce Hangul with whatever
+  // default (often English) voice they fall back to, which is worse than
+  // staying silent.
+  const vs=await getVoicesAsync();
+  const koVoice=vs.find(v=>v.lang==='ko-KR')||vs.find(v=>v.lang.startsWith('ko'));
+  if(!koVoice)return;
   return new Promise(r=>{
-    const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=0.95;
-    const vs=speechSynthesis.getVoices();
-    const b=vs.find(v=>v.lang==='ko-KR')||vs.find(v=>v.lang.startsWith('ko'));
-    if(b)u.voice=b;u.onend=r;u.onerror=r;speechSynthesis.cancel();speechSynthesis.speak(u);
+    const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=0.95;u.voice=koVoice;
+    u.onend=r;u.onerror=r;speechSynthesis.cancel();speechSynthesis.speak(u);
   });
 }
 
