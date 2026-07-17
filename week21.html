@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>영단어 시험 — Week 22</title>
+<title>영단어 시험 — Week 21</title>
 <style>
 :root{--ink:#2b2520;--paper:#faf6ee;--card:#fffdf8;--rust:#c1502e;--navy:#3a4d6b;--gold:#d9a441;--line:#e6ddc9;--good:#4a7c4e;--bad:#b3413a;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -182,7 +182,7 @@ header h1{font-size:1.1rem;margin:0;}
     <h1>📝 영단어 시험</h1>
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="history-btn" onclick="showHistory()">📊 기록</button>
-      <span class="stamp">WEEK 22</span>
+      <span class="stamp">WEEK 21</span>
     </div>
   </header>
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -202,23 +202,23 @@ header h1{font-size:1.1rem;margin:0;}
 </div>
 <script>
 const WORDS=[
-  {word:"wildlife",       pos:"noun", example:"I saw a lot of wildlife in a national park.",                              syn:null,          ant:null,          def:"wild animals that live free of humans",                                  defKo:"인간에게서 자유롭게 사는 야생 동물"},
-  {word:"nimble",         pos:"adj.", example:"Danny tried to catch his friend, but Justin was too nimble.",              syn:"fast",        ant:"slow",        def:"quick and light in movement",                                            defKo:"동작이 빠르고 가벼운, 민첩한"},
-  {word:"requirement",    pos:"noun", example:"The student does not meet all the requirements to get into the academy.", syn:"necessity",   ant:null,          def:"something that is needed or necessary",                                  defKo:"필요하거나 필수적인 것, 요건"},
-  {word:"poisonous",      pos:"adj.", example:"You need to be careful of poisonous plants in the woods.",                syn:"toxic",       ant:"nontoxic",    def:"very harmful and able to cause illness or death",                        defKo:"매우 해롭고 병이나 죽음을 일으킬 수 있는, 독이 있는"},
-  {word:"solemnly",       pos:"adv.", example:"The family solemnly attended the funeral.",                               syn:"earnestly",   ant:"cheerfully", def:"seriously and without any humor",                                        defKo:"진지하고 유머 없이, 엄숙하게"},
-  {word:"bliss",          pos:"noun", example:"I am feeling bliss after all the love I received on my birthday.",        syn:"happiness",   ant:"sadness",     def:"complete joyfulness",                                                    defKo:"완전한 기쁨, 더없는 행복"},
-  {word:"beam",           pos:"verb", example:"The baby beamed with joy when he saw his mom.",                           syn:"smile",       ant:"frown",       def:"to make a happy or friendly expression",                                 defKo:"행복하거나 다정한 표정을 짓다, 활짝 웃다"},
-  {word:"casually",       pos:"adv.", example:"My dad casually looked out the window while my mom worked.",              syn:"carelessly",  ant:"carefully",   def:"in a way that does not show any particular interest or care",           defKo:"특별한 관심이나 주의를 보이지 않는 방식으로, 무심코"},
-  {word:"halt",           pos:"noun", example:"The man came to a halt to check his messages on his phone.",              syn:null,          ant:null,          def:"an occasion when something stops moving or happening",                  defKo:"무언가가 움직이거나 일어나는 것을 멈추는 상황, 정지"},
-  {word:"affectionately", pos:"adv.", example:"The mother affectionately held and looked at her newborn.",               syn:"lovingly",    ant:"unlovingly", def:"in a way that shows liking or love",                                     defKo:"애정이나 사랑을 보여주는 방식으로, 다정하게"},
-  {word:"discordant",     pos:"adj.", example:"I do not like hearing my brother's discordant singing.",                  syn:"noisy",       ant:"melodic",     def:"producing an unpleasant sound",                                          defKo:"불쾌한 소리를 내는, 불협화음의"},
-  {word:"data",           pos:"noun", example:"The data shows that Herman is the tallest student in the first grade.",   syn:"information", ant:null,          def:"facts that are used to figure something out",                            defKo:"무언가를 알아내는 데 사용되는 사실들, 데이터"},
-  {word:"record",         pos:"verb", example:"Make sure to record all the data from your experiments.",                 syn:"log",         ant:null,          def:"to keep information for later by writing it down",                      defKo:"나중을 위해 정보를 적어서 남겨두다, 기록하다"},
-  {word:"result",         pos:"noun", example:"The results of the experiment were very different from what we expected.", syn:"outcome",    ant:"cause",       def:"something that happens or exists because of something else",            defKo:"다른 무언가 때문에 일어나거나 존재하는 것, 결과"},
-  {word:"variable",       pos:"noun", example:"Sunlight is a variable that affects how fast your plant grows.",          syn:"factor",      ant:null,          def:"something that is changed in an experiment to see what effect it has",  defKo:"실험에서 효과를 알아보기 위해 변화시키는 것, 변인"},
+  {word:"inhabit",       pos:"verb", example:"A tiger family inhabited the large den in the forest.",                    syn:"reside",     ant:null,        def:"to live in a place",                                                     defKo:"~에 살다, 거주하다"},
+  {word:"unaware",       pos:"adj.", example:"The children were unaware of the danger of the thunderstorm.",             syn:"clueless",   ant:"aware",     def:"not knowing what is happening",                                          defKo:"무슨 일이 일어나는지 모르는"},
+  {word:"illegal",       pos:"adj.", example:"It is illegal to steal from others.",                                      syn:"unlawful",   ant:"legal",     def:"not allowed by law or rules",                                            defKo:"법이나 규칙으로 허용되지 않는, 불법의"},
+  {word:"endangered",    pos:"adj.", example:"Many animals are becoming endangered due to habitat destruction.",         syn:"threatened", ant:null,        def:"(of a species) in danger of being harmed, lost, unsuccessful, etc.",     defKo:"(생물종이) 해를 입거나 사라질 위험에 처한, 멸종 위기의"},
+  {word:"plumbing",      pos:"noun", example:"There was something wrong with the plumbing in our kitchen sink.",         syn:null,         ant:null,        def:"the water pipes and similar systems in a building",                      defKo:"건물 안의 수도관 등 배관 시설"},
+  {word:"squeal",        pos:"verb", example:"The children squealed while going down on the roller coaster.",            syn:"shriek",     ant:"whisper",   def:"to make a long, very high sound or cry",                                 defKo:"길고 아주 높은 소리를 내다, 비명을 지르다"},
+  {word:"loose",         pos:"adj.", example:"Do not walk around with loose shoelaces or you might trip and fall.",      syn:"unsecured",  ant:"tight",     def:"not firmly held or fastened in place",                                   defKo:"단단히 고정되어 있지 않은, 헐거운"},
+  {word:"limp",          pos:"verb", example:"Mary began to limp after injuring her leg.",                               syn:"hobble",     ant:null,        def:"to walk with an irregular step, especially because of a hurt foot or leg", defKo:"다친 발이나 다리 때문에 절뚝거리며 걷다"},
+  {word:"tame",          pos:"verb", example:"The circus leader tames animals for the circus.",                          syn:"control",    ant:null,        def:"to train a wild animal",                                                 defKo:"야생 동물을 길들이다"},
+  {word:"attractive",    pos:"adj.", example:"Many people find my neighborhood attractive and quiet.",                   syn:"appealing",  ant:"ugly",      def:"having a pleasing appearance",                                           defKo:"외모가 매력적인"},
+  {word:"endearment",    pos:"noun", example:"My parents like to whisper endearments to me before they put me to bed.",  syn:"praise",     ant:null,        def:"a word or phrase that is used to show love or adoration",                defKo:"사랑이나 애정을 표현하는 말이나 문구"},
+  {word:"experiment",    pos:"noun", example:"We did experiments in science class to see if objects sink or float in water.", syn:null,     ant:null,        def:"a test done in order to learn something or discover if something is true", defKo:"무언가를 알아내거나 사실인지 확인하기 위해 하는 실험"},
+  {word:"investigation", pos:"noun", example:"Tia started an investigation to find out why there was paint on a tree.",  syn:"study",      ant:null,        def:"the act of examining something carefully to discover the truth",         defKo:"진실을 밝히기 위해 무언가를 자세히 조사하는 행위"},
+  {word:"method",        pos:"noun", example:"My mom has a special method she uses to bake cookies.",                    syn:"strategy",   ant:null,        def:"a way of doing something",                                               defKo:"어떤 일을 하는 방법"},
+  {word:"procedure",     pos:"noun", example:"Follow the proper procedure for leaving the building during a fire drill.", syn:"method",     ant:null,        def:"steps that must be taken to do something",                              defKo:"어떤 일을 하기 위해 거쳐야 하는 절차"},
 ];
-const SA_ALL=['fast','slow','necessity','toxic','nontoxic','earnestly','cheerfully','happiness','sadness','smile','frown','carelessly','carefully','lovingly','unlovingly','noisy','melodic','information','log','outcome','cause','factor'];
+const SA_ALL=['reside','clueless','unlawful','threatened','shriek','unsecured','hobble','control','appealing','praise','study','strategy','method','aware','legal','whisper','tight','ugly'];
 const POS_VALS=['noun','verb','adj.','adv.'];
 const isPOS=v=>POS_VALS.includes(v);
 
@@ -754,7 +754,7 @@ function render(){
   if(phase==='start'){
     document.getElementById('progressFill').style.width='0%';
     app.innerHTML=`<div style="text-align:center;padding:22px 8px">
-      <div style="font-size:2.4rem">📖</div><h2>WEEK 22 영단어 시험</h2>
+      <div style="font-size:2.4rem">📖</div><h2>WEEK 21 영단어 시험</h2>
       <p style="color:#5c5345;line-height:1.8;font-size:.92rem">
         왼쪽: 단어 받아쓰기 (펜으로)<br>오른쪽: 동의어 · 반의어 · 품사 드래그 배치<br>15단어 완료 후 자동 채점
       </p>
