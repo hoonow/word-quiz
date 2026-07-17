@@ -345,6 +345,7 @@ let defOrder=[],defIdx=0,defScore=0,defChoices=[],defAnswered=null;
 
 // ── Result DB (shared Supabase-backed API also used by the portfolio dashboard) ──
 const API_BASE='https://portfolio-dashboard-hmwa.onrender.com';
+const WEEK_LABEL='22';
 function buildDetailData(){
   const dictMap={};wordResults.forEach(r=>dictMap[r.word]=r.dictOk);
   return quizWords.map(w=>({
@@ -361,7 +362,7 @@ async function saveResultToDB(r){
   try{
     await fetch(API_BASE+'/quiz/results',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({allOk:r.allOk,total:r.total,dictOk:r.dictOk,dictTot:r.dictTot,mapOk:r.mapOk,mapTot:r.mapTot,details:buildDetailData()})
+      body:JSON.stringify({allOk:r.allOk,total:r.total,dictOk:r.dictOk,dictTot:r.dictTot,mapOk:r.mapOk,mapTot:r.mapTot,details:buildDetailData(),week:WEEK_LABEL})
     });
   }catch(e){/* 오프라인 등으로 저장 실패해도 화면의 결과 자체는 이미 보이므로 조용히 무시 */}
 }
@@ -370,7 +371,7 @@ async function showHistory(){
   const body=document.getElementById('historyBody');
   body.innerHTML='<div class="history-empty">불러오는 중...</div>';
   try{
-    const res=await fetch(API_BASE+'/quiz/results');
+    const res=await fetch(API_BASE+'/quiz/results?week='+encodeURIComponent(WEEK_LABEL));
     const data=await res.json();
     historyList=(data.results||[]).slice().reverse();
     renderHistoryList();
@@ -422,9 +423,9 @@ function closeHistory(){document.getElementById('historyOverlay').style.display=
 async function deleteAllHistory(){
   const pw=prompt('전체 기록을 삭제하려면 비밀번호를 입력하세요.');
   if(pw===null)return;
-  if(pw!=='24680'){alert('비밀번호가 틀렸습니다.');return;}
+  if(pw!=='0818'){alert('비밀번호가 틀렸습니다.');return;}
   try{
-    await fetch(API_BASE+'/quiz/results',{method:'DELETE'});
+    await fetch(API_BASE+'/quiz/results?week='+encodeURIComponent(WEEK_LABEL),{method:'DELETE'});
     showHistory();
   }catch(e){
     alert('삭제에 실패했습니다. 인터넷 연결을 확인하세요.');
