@@ -268,25 +268,43 @@ async function wSpeak(text){
     if(b)u.voice=b;u.onend=r;u.onerror=r;speechSynthesis.cancel();speechSynthesis.speak(u);
   });
 }
-async function playOnce(text){
-  // 1. Google Translate TTS
-  const ok=await new Promise(resolve=>{
-    const a=new Audio(googleTTSUrl(text));let done=false;
+// Google's translate_tts endpoint sometimes gets blocked/rate-limited part
+// way through a session (school wifi filters, carrier NAT, etc.). Once a
+// couple of attempts in a row fail, stop retrying it for the rest of the
+// session so playback doesn't stall for several seconds on every remaining
+// word — go straight to the dictionary/Web Speech fallback instead.
+let googleTtsDisabled=false,googleTtsFailStreak=0;
+async function tryGoogleTTS(url){
+  return new Promise(resolve=>{
+    const a=new Audio(url);let done=false;
     const fin=s=>{if(!done){done=true;resolve(s);}};
     a.oncanplay=()=>a.play().then(()=>{}).catch(()=>fin(false));
     a.onended=()=>fin(true);a.onerror=()=>fin(false);
-    setTimeout(()=>fin(false),6000);a.load();
+    setTimeout(()=>fin(false),4000);a.load();
   });
-  if(ok)return;
+}
+async function playOnce(text,skipGoogle){
+  // 1. Google Translate TTS
+  if(!skipGoogle&&!googleTtsDisabled){
+    const ok=await tryGoogleTTS(googleTTSUrl(text));
+    if(ok){googleTtsFailStreak=0;return true;}
+    if(++googleTtsFailStreak>=2)googleTtsDisabled=true;
+  }
   // 2. Dict API (single word)
-  if(!text.includes(' ')){const du=await getDictUrl(text);if(du){await playUrl(du);return;}}
+  if(!text.includes(' ')){const du=await getDictUrl(text);if(du){await playUrl(du);return false;}}
   // 3. Web Speech
   await wSpeak(text);
+  return false;
 }
 async function speakWord3x(word,btnId){
   const btn=document.getElementById(btnId),sp=btn?.querySelector('.spin');
   if(btn)btn.disabled=true;if(sp)sp.style.display='inline-block';
-  for(let i=0;i<3;i++){await playOnce(word);if(i<2)await wait(500);}
+  let skipGoogle=false;
+  for(let i=0;i<3;i++){
+    const googleWorked=await playOnce(word,skipGoogle);
+    if(i===0&&!googleWorked)skipGoogle=true; // this word's Google TTS already failed once — retrying it 2 more times just wastes time before the fallback voice is heard
+    if(i<2)await wait(500);
+  }
   if(btn)btn.disabled=false;if(sp)sp.style.display='none';
 }
 async function speakOnce(text,btnId){
@@ -297,13 +315,12 @@ async function speakOnce(text,btnId){
 }
 function googleTTSUrlKo(t){return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(t)}&tl=ko&client=tw-ob`;}
 async function playOnceKorean(text){
-  const ok=await new Promise(resolve=>{
-    const a=new Audio(googleTTSUrlKo(text));let done=false;
-    const fin=s=>{if(!done){done=true;resolve(s);}};
-    a.oncanplay=()=>a.play().then(()=>{}).catch(()=>fin(false));
-    a.onended=()=>fin(true);a.onerror=()=>fin(false);
-    setTimeout(()=>fin(false),6000);a.load();
-  });
+  let ok=false;
+  if(!googleTtsDisabled){
+    ok=await tryGoogleTTS(googleTTSUrlKo(text));
+    if(ok)googleTtsFailStreak=0;
+    else if(++googleTtsFailStreak>=2)googleTtsDisabled=true;
+  }
   if(ok)return;
   // Web Speech fallback: only speak if a real Korean voice is installed on
   // this device — without one, engines mispronounce Hangul with whatever
