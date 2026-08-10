@@ -249,7 +249,7 @@ async function getDictUrl(word){
     return(audioCache[word]=url||null);
   }catch{return(audioCache[word]=null);}
 }
-function playUrl(url){return new Promise(r=>{const a=new Audio(url);a.onended=r;a.onerror=r;a.play().catch(r);});}
+function playUrl(url){return new Promise((resolve,reject)=>{const a=new Audio(url);a.onended=resolve;a.onerror=reject;a.play().catch(reject);});}
 function getVoicesAsync(){
   return new Promise(resolve=>{
     const vs=speechSynthesis.getVoices();
@@ -291,7 +291,13 @@ async function playOnce(text,skipGoogle){
     if(++googleTtsFailStreak>=2)googleTtsDisabled=true;
   }
   // 2. Dict API (single word)
-  if(!text.includes(' ')){const du=await getDictUrl(text);if(du){await playUrl(du);return false;}}
+  if(!text.includes(' ')){
+    const du=await getDictUrl(text);
+    if(du){
+      try{await playUrl(du);return false;}
+      catch{/* dict audio file failed to actually play (dead link, blocked, etc.) — fall through to Web Speech */}
+    }
+  }
   // 3. Web Speech
   await wSpeak(text);
   return false;
