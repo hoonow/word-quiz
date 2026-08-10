@@ -384,6 +384,29 @@ let defOrder=[],defIdx=0,defScore=0,defChoices=[],defAnswered=null;
 // ── Result DB (shared Supabase-backed API also used by the portfolio dashboard) ──
 const API_BASE='https://portfolio-dashboard-hmwa.onrender.com';
 const WEEK_LABEL='1';
+
+// ── In-progress save (survives an accidental refresh mid-quiz) ──────────
+// Keyed per week since localStorage is shared across index.html/week*.html
+// on the same GitHub Pages origin.
+const PROGRESS_KEY='wordquiz_progress_'+WEEK_LABEL;
+function saveProgress(){
+  try{
+    if(phase==='quiz'){
+      localStorage.setItem(PROGRESS_KEY,JSON.stringify({
+        phase,isReview,
+        quizWordNames:isReview?quizWords.map(w=>w.word):null,
+        wordOrder,wIdx,wordResults,completedWords,slotContents,
+        poolSet:[...poolSet],
+      }));
+    }else if(phase==='defquiz'){
+      localStorage.setItem(PROGRESS_KEY,JSON.stringify({phase,defOrder,defIdx,defScore}));
+    }
+  }catch(e){/* localStorage unavailable (private mode, quota, etc.) — just skip saving */}
+}
+function clearProgress(){try{localStorage.removeItem(PROGRESS_KEY);}catch(e){}}
+function loadProgress(){
+  try{const raw=localStorage.getItem(PROGRESS_KEY);return raw?JSON.parse(raw):null;}catch(e){return null;}
+}
 function buildDetailData(){
   const dictMap={};wordResults.forEach(r=>dictMap[r.word]=r.dictOk);
   return quizWords.map(w=>({
@@ -504,10 +527,11 @@ function defSelect(idx){
     else if(i===idx)btn.classList.add('def-wrong');
   });
   document.getElementById('defNextBtn').style.display='block';
+  saveProgress();
 }
 function nextDefQuestion(){
   defIdx++;
-  if(defIdx>=defOrder.length){phase='defresult';render();return;}
+  if(defIdx>=defOrder.length){clearProgress();phase='defresult';render();return;}
   render();
 }
 function getWrongWords(){
@@ -583,11 +607,12 @@ function gradeDictation(ok){
   wordResults.push({word:quizWords[wordOrder[wIdx]].word,dictOk:ok});
   document.getElementById('gradeRow').style.display='none';
   document.getElementById('nextBtn').style.display='block';
+  saveProgress();
 }
 function nextWord(){
   completedWords.push(quizWords[wordOrder[wIdx]].word);
   wIdx++;
-  if(wIdx>=wordOrder.length){phase='result';render();return;}
+  if(wIdx>=wordOrder.length){clearProgress();phase='result';render();return;}
   subPhase='input';tapSel=null;render();
 }
 function prevWord(){
@@ -725,6 +750,7 @@ function updatePool(){
   }).join('');
   const sb=document.getElementById('sel-badge');
   if(sb)sb.textContent=tapSel?`✦ "${tapSel.answer}" 선택됨 — 슬롯을 탭하세요`:'';
+  saveProgress();
 }
 function updateSlot(slotId){
   const el=document.getElementById('slot-'+slotId);if(!el)return;
@@ -821,6 +847,7 @@ function render(){
     <button class="next-btn" id="defNextBtn" onclick="nextDefQuestion()" style="display:none;max-width:560px;margin:14px auto 0;">${defIdx+1<WORDS.length?'다음 문제 →':'결과 보기 →'}</button>
     `;
     playOnce(w.word);
+    saveProgress();
     return;
   }
 
@@ -834,7 +861,7 @@ function render(){
         <div style="font-size:.85rem;color:#8a7f6a">뜻 문제 결과 ${emoji} ${msg}</div>
         <div class="result-score-big">${defScore} <span style="font-size:1.4rem;color:#8a7f6a">/ ${WORDS.length}</span></div>
       </div>
-      <button class="restart-btn" onclick="phase='start';render();">처음으로</button>
+      <button class="restart-btn" onclick="clearProgress();phase='start';render();">처음으로</button>
     </div>`;
     return;
   }
@@ -939,12 +966,47 @@ function render(){
         </table>
       </div>
       ${wrongWords.length?`<button class="review-btn" onclick="startReview(getWrongWords())">🔁 틀린 문제(${wrongWords.length}개) 복습하기</button>`:''}
-      <button class="restart-btn" onclick="location.reload()">다시 시작</button>
+      <button class="restart-btn" onclick="clearProgress();location.reload()">다시 시작</button>
     </div>`;
   }
 }
 
 speechSynthesis.onvoiceschanged=()=>{};speechSynthesis.getVoices();
+
+// ── Resume an in-progress quiz after an accidental refresh ──────────────
+(function restoreProgress(){
+  try{
+    const data=loadProgress();
+    if(!data)return;
+    if(data.phase==='quiz'){
+      const qw=(data.isReview&&Array.isArray(data.quizWordNames))
+        ? data.quizWordNames.map(n=>WORDS.find(w=>w.word===n)).filter(Boolean)
+        : WORDS;
+      const wo=Array.isArray(data.wordOrder)?data.wordOrder:null;
+      const valid=qw.length>0&&wo&&wo.length===qw.length&&wo.every(i=>Number.isInteger(i)&&i>=0&&i<qw.length);
+      if(!valid){clearProgress();return;}
+      quizWords=qw;isReview=!!data.isReview;wordOrder=wo;
+      wIdx=Math.min(Math.max(data.wIdx||0,0),wordOrder.length-1);
+      wordResults=Array.isArray(data.wordResults)?data.wordResults:[];
+      completedWords=Array.isArray(data.completedWords)?data.completedWords:[];
+      slotContents=(data.slotContents&&typeof data.slotContents==='object')?data.slotContents:{};
+      poolSet=new Set(Array.isArray(data.poolSet)?data.poolSet:[]);
+      // the word we were on may have been mid-confirm/reveal when the page
+      // reloaded — resume it from a clean input state rather than trying to
+      // rebuild that transient UI, but keep every earlier word's progress
+      const curWk=quizWords[wordOrder[wIdx]].word;
+      wordResults=wordResults.filter(r=>r.word!==curWk);
+      subPhase='input';tapSel=null;phase='quiz';
+    }else if(data.phase==='defquiz'){
+      const order=Array.isArray(data.defOrder)?data.defOrder:null;
+      const valid=order&&order.length===WORDS.length&&order.every(i=>Number.isInteger(i)&&i>=0&&i<WORDS.length);
+      if(!valid){clearProgress();return;}
+      defOrder=order;defIdx=Math.min(Math.max(data.defIdx||0,0),defOrder.length-1);defScore=data.defScore||0;
+      phase='defquiz';
+    }
+  }catch(e){/* corrupted saved progress — fall back to the normal start screen */}
+})();
+
 render();
 </script>
 </body>
