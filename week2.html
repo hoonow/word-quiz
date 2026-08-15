@@ -502,6 +502,9 @@ function closeHistory(){document.getElementById('historyOverlay').style.display=
 
 // ── Pronunciation check (tap any word to hear it once — for verifying TTS works on this device) ──
 function showPronounceCheck(){
+  const pw=prompt('발음 확인을 보려면 비밀번호를 입력하세요.');
+  if(pw===null)return;
+  if(pw!=='word'){alert('비밀번호가 틀렸습니다.');return;}
   document.getElementById('pronounceOverlay').style.display='flex';
   const body=document.getElementById('pronounceBody');
   body.innerHTML=WORDS.map((w,i)=>`
