@@ -19,6 +19,11 @@ header h1{font-size:1.1rem;margin:0;}
 .prev-btn{background:none;border:1px solid var(--line);border-radius:8px;padding:6px 12px;
   font-size:.78rem;font-weight:bold;color:var(--navy);cursor:pointer;font-family:inherit;}
 .prev-btn:disabled{opacity:.35;cursor:not-allowed;}
+.word-nav-bar{display:flex;gap:3px;margin-bottom:12px;}
+.word-seg{flex:1;height:16px;min-width:0;border-radius:4px;border:none;padding:0;
+  background:var(--line);cursor:default;}
+.word-seg.done{background:var(--good);cursor:pointer;}
+.word-seg.current{background:var(--rust);cursor:pointer;box-shadow:0 0 0 2px var(--gold) inset;}
 
 .top-btns{display:flex;gap:10px;margin-bottom:12px;}
 .top-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
@@ -184,6 +189,7 @@ header h1{font-size:1.1rem;margin:0;}
       <h1>📝 영단어 시험</h1>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
+      <button class="history-btn" onclick="showPronounceCheck()">🔊 발음확인</button>
       <button class="history-btn" onclick="showHistory()">📊 기록</button>
       <span class="stamp">WEEK 1</span>
     </div>
@@ -201,6 +207,15 @@ header h1{font-size:1.1rem;margin:0;}
       </div>
     </div>
     <div class="history-body" id="historyBody"></div>
+  </div>
+</div>
+<div class="history-overlay" id="pronounceOverlay">
+  <div class="history-modal">
+    <div class="history-head">
+      <h3>🔊 발음 확인</h3>
+      <button class="history-close" onclick="closePronounceCheck()">✕</button>
+    </div>
+    <div class="history-body" id="pronounceBody"></div>
   </div>
 </div>
 <script>
@@ -305,14 +320,14 @@ async function playOnce(text,skipGoogle){
   await wSpeak(text);
   return false;
 }
-async function speakWord3x(word,btnId){
+async function speakWord2x(word,btnId){
   const btn=document.getElementById(btnId),sp=btn?.querySelector('.spin');
   if(btn)btn.disabled=true;if(sp)sp.style.display='inline-block';
   let skipGoogle=false;
-  for(let i=0;i<3;i++){
+  for(let i=0;i<2;i++){
     const googleWorked=await playOnce(word,skipGoogle);
-    if(i===0&&!googleWorked)skipGoogle=true; // this word's Google TTS already failed once — retrying it 2 more times just wastes time before the fallback voice is heard
-    if(i<2)await wait(500);
+    if(i===0&&!googleWorked)skipGoogle=true; // this word's Google TTS already failed once — retrying it again just wastes time before the fallback voice is heard
+    if(i<1)await wait(500);
   }
   if(btn)btn.disabled=false;if(sp)sp.style.display='none';
 }
@@ -484,6 +499,23 @@ function showHistoryDetail(idx){
   </table></div>`;
 }
 function closeHistory(){document.getElementById('historyOverlay').style.display='none';}
+
+// ── Pronunciation check (tap any word to hear it once — for verifying TTS works on this device) ──
+function showPronounceCheck(){
+  document.getElementById('pronounceOverlay').style.display='flex';
+  const body=document.getElementById('pronounceBody');
+  body.innerHTML=WORDS.map((w,i)=>`
+    <div class="history-row" id="pron-row-${i}" onclick="checkPronounce(${i})">
+      <div class="history-row-top"><b>${i+1}. ${w.word}</b></div>
+    </div>`).join('');
+}
+function closePronounceCheck(){document.getElementById('pronounceOverlay').style.display='none';}
+async function checkPronounce(i){
+  const row=document.getElementById('pron-row-'+i);
+  if(row)row.style.opacity='.5';
+  await playOnce(WORDS[i].word);
+  if(row)row.style.opacity='1';
+}
 async function deleteAllHistory(){
   const pw=prompt('전체 기록을 삭제하려면 비밀번호를 입력하세요.');
   if(pw===null)return;
@@ -611,7 +643,7 @@ function revealWord(){
   document.querySelectorAll('.slot-zone').forEach(el=>el.classList.add('locked'));
   gradeMatchSlots(w);
   subPhase='revealed';
-  speakWord3x(w.word,'soundBtn');
+  speakWord2x(w.word,'soundBtn');
 }
 function gradeDictation(ok){
   wordResults.push({word:quizWords[wordOrder[wIdx]].word,dictOk:ok});
@@ -627,14 +659,24 @@ function nextWord(){
 }
 function prevWord(){
   if(wIdx<=0)return;
-  wIdx--;
-  completedWords.length=wIdx;
-  const wk=quizWords[wordOrder[wIdx]].word;
-  wordResults=wordResults.filter(r=>r.word!==wk);
-  ['syn','ant','pos'].forEach(t=>{
-    const sid=wk+'-'+t,val=slotContents[sid];
-    if(val){if(!isPOS(val))poolSet.add(val);delete slotContents[sid];}
-  });
+  jumpToWord(wIdx-1);
+}
+// Jump back to an already-visited word (the nav bar only allows this, not
+// skipping ahead to words not yet reached). Rolls back every word from the
+// current position down to the target one, same as stepping back with
+// prevWord() repeatedly.
+function jumpToWord(targetIdx){
+  if(targetIdx<0||targetIdx>=wIdx)return;
+  while(wIdx>targetIdx){
+    wIdx--;
+    completedWords.length=wIdx;
+    const wk=quizWords[wordOrder[wIdx]].word;
+    wordResults=wordResults.filter(r=>r.word!==wk);
+    ['syn','ant','pos'].forEach(t=>{
+      const sid=wk+'-'+t,val=slotContents[sid];
+      if(val){if(!isPOS(val))poolSet.add(val);delete slotContents[sid];}
+    });
+  }
   subPhase='input';tapSel=null;render();
 }
 
@@ -885,8 +927,14 @@ function render(){
       <button class="prev-btn" onclick="prevWord()" ${wIdx===0?'disabled':''}>← 이전 단어</button>
       <div class="stage-label">${wIdx+1} / ${quizWords.length} 단어${isReview?' · 복습':''}</div>
     </div>
+    <div class="word-nav-bar">
+      ${wordOrder.map((_,i)=>{
+        const cls=i===wIdx?'current':i<wIdx?'done':'';
+        return `<button class="word-seg ${cls}" ${i<=wIdx?`onclick="jumpToWord(${i})"`:'disabled'} title="${i+1}번째 단어로 이동"></button>`;
+      }).join('')}
+    </div>
     <div class="top-btns">
-      <button class="top-btn sound" id="soundBtn" onclick="speakWord3x('${esc(wk)}','soundBtn')">🔊 발음 3회<span class="spin"></span></button>
+      <button class="top-btn sound" id="soundBtn" onclick="speakWord2x('${esc(wk)}','soundBtn')">🔊 발음 2회<span class="spin"></span></button>
       <button class="top-btn hint"  id="hintBtn"  onclick="speakOnce('${esc(w.example)}','hintBtn')">💡 예문<span class="spin"></span></button>
     </div>
     <div class="main-area">
