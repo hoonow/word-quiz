@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>영단어 시험 — Week 21</title>
+<title>영단어 시험 — Week 2</title>
 <style>
 :root{--ink:#2b2520;--paper:#faf6ee;--card:#fffdf8;--rust:#c1502e;--navy:#3a4d6b;--gold:#d9a441;--line:#e6ddc9;--good:#4a7c4e;--bad:#b3413a;}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -179,10 +179,13 @@ header h1{font-size:1.1rem;margin:0;}
 <body>
 <div class="wrap">
   <header>
-    <h1>📝 영단어 시험</h1>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <a href="index.html" class="history-btn" style="text-decoration:none;">🏠</a>
+      <h1>📝 영단어 시험</h1>
+    </div>
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="history-btn" onclick="showHistory()">📊 기록</button>
-      <span class="stamp">WEEK 21</span>
+      <span class="stamp">WEEK 2</span>
     </div>
   </header>
   <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
@@ -202,24 +205,24 @@ header h1{font-size:1.1rem;margin:0;}
 </div>
 <script>
 const WORDS=[
-  {word:"inhabit",       pos:"verb", example:"A tiger family inhabited the large den in the forest.",                    syn:"reside",     ant:null,        def:"to live in a place",                                                     defKo:"~에 살다, 거주하다"},
-  {word:"unaware",       pos:"adj.", example:"The children were unaware of the danger of the thunderstorm.",             syn:"clueless",   ant:"aware",     def:"not knowing what is happening",                                          defKo:"무슨 일이 일어나는지 모르는"},
-  {word:"illegal",       pos:"adj.", example:"It is illegal to steal from others.",                                      syn:"unlawful",   ant:"legal",     def:"not allowed by law or rules",                                            defKo:"법이나 규칙으로 허용되지 않는, 불법의"},
-  {word:"endangered",    pos:"adj.", example:"Many animals are becoming endangered due to habitat destruction.",         syn:"threatened", ant:null,        def:"(of a species) in danger of being harmed, lost, unsuccessful, etc.",     defKo:"(생물종이) 해를 입거나 사라질 위험에 처한, 멸종 위기의"},
-  {word:"plumbing",      pos:"noun", example:"There was something wrong with the plumbing in our kitchen sink.",         syn:null,         ant:null,        def:"the water pipes and similar systems in a building",                      defKo:"건물 안의 수도관 등 배관 시설"},
-  {word:"squeal",        pos:"verb", example:"The children squealed while going down on the roller coaster.",            syn:"shriek",     ant:"whisper",   def:"to make a long, very high sound or cry",                                 defKo:"길고 아주 높은 소리를 내다, 비명을 지르다"},
-  {word:"loose",         pos:"adj.", example:"Do not walk around with loose shoelaces or you might trip and fall.",      syn:"unsecured",  ant:"tight",     def:"not firmly held or fastened in place",                                   defKo:"단단히 고정되어 있지 않은, 헐거운"},
-  {word:"limp",          pos:"verb", example:"Mary began to limp after injuring her leg.",                               syn:"hobble",     ant:null,        def:"to walk with an irregular step, especially because of a hurt foot or leg", defKo:"다친 발이나 다리 때문에 절뚝거리며 걷다"},
-  {word:"tame",          pos:"verb", example:"The circus leader tames animals for the circus.",                          syn:"control",    ant:null,        def:"to train a wild animal",                                                 defKo:"야생 동물을 길들이다"},
-  {word:"attractive",    pos:"adj.", example:"Many people find my neighborhood attractive and quiet.",                   syn:"appealing",  ant:"ugly",      def:"having a pleasing appearance",                                           defKo:"외모가 매력적인"},
-  {word:"endearment",    pos:"noun", example:"My parents like to whisper endearments to me before they put me to bed.",  syn:"praise",     ant:null,        def:"a word or phrase that is used to show love or adoration",                defKo:"사랑이나 애정을 표현하는 말이나 문구"},
-  {word:"experiment",    pos:"noun", example:"We did experiments in science class to see if objects sink or float in water.", syn:null,     ant:null,        def:"a test done in order to learn something or discover if something is true", defKo:"무언가를 알아내거나 사실인지 확인하기 위해 하는 실험"},
-  {word:"investigation", pos:"noun", example:"Tia started an investigation to find out why there was paint on a tree.",  syn:"study",      ant:null,        def:"the act of examining something carefully to discover the truth",         defKo:"진실을 밝히기 위해 무언가를 자세히 조사하는 행위"},
-  {word:"method",        pos:"noun", example:"My mom has a special method she uses to bake cookies.",                    syn:"strategy",   ant:null,        def:"a way of doing something",                                               defKo:"어떤 일을 하는 방법"},
-  {word:"procedure",     pos:"noun", example:"Follow the proper procedure for leaving the building during a fire drill.", syn:"method",     ant:null,        def:"steps that must be taken to do something",                              defKo:"어떤 일을 하기 위해 거쳐야 하는 절차"},
+  {word:"bellow",        pos:"verb",  example:"The elephant bellowed loudly, signaling her calf to stay alert.",           syn:"roar",        ant:"whimper",      def:"(of a large animal) to make a loud, deep sound",                          defKo:"(큰 동물이) 크고 깊은 소리를 내다, 큰 소리로 울부짖다"},
+  {word:"nifty",         pos:"adj.", example:"The students made a nifty robot for their science project.",               syn:"excellent",   ant:"terrible",     def:"good, pleasing, or effective",                                            defKo:"좋은, 마음에 드는, 효과적인"},
+  {word:"nostril",       pos:"noun", example:"I could not breathe through my nostrils because of my allergies.",         syn:null,          ant:null,           def:"one of the two openings in the nose through which air moves when breathing", defKo:"숨쉴 때 공기가 드나드는 코의 두 구멍 중 하나, 콧구멍"},
+  {word:"gills",         pos:"noun", example:"Fish have gills that allow them to breathe underwater.",                   syn:null,          ant:null,           def:"an organ which allows fish and other water creatures to breathe underwater", defKo:"물고기 등 수중 생물이 물속에서 숨을 쉴 수 있게 해주는 기관, 아가미"},
+  {word:"quite",         pos:"adv.", example:"It was quite a surprise when my sister threw a party for me.",             syn:"completely",  ant:"partly",       def:"entirely; to a full extent or degree",                                    defKo:"완전히, 충분한 정도로"},
+  {word:"over the moon", pos:"idiom",example:"Jen was over the moon when she received a puppy for her birthday.",         syn:"thrilled",    ant:"miserable",    def:"very pleased",                                                            defKo:"매우 기뻐하는"},
+  {word:"keen",          pos:"adj.", example:"My little brother is keen on riding his bicycle without training wheels.", syn:"eager",       ant:"uninterested", def:"very interested or wanting to do something very much",                   defKo:"무언가를 매우 하고 싶어하거나 관심이 많은"},
+  {word:"skitter",       pos:"verb", example:"I watched the mouse skitter across the kitchen floor.",                    syn:"scurry",      ant:null,           def:"to move quickly and lightly along a surface",                             defKo:"표면을 따라 빠르고 가볍게 움직이다"},
+  {word:"valid",         pos:"adj.", example:"Your ticket is still valid, so you can enter the amusement park.",         syn:"authorized",  ant:"expired",      def:"able to be accepted",                                                     defKo:"받아들여질 수 있는, 유효한"},
+  {word:"suede",         pos:"adj.", example:"Maria bought a new pair of soft, suede shoes.",                            syn:"calfskin",    ant:null,           def:"made of a soft leather",                                                  defKo:"부드러운 가죽으로 만든, 스웨이드의"},
+  {word:"wrench",        pos:"verb", example:"James had to use a lot of strength to wrench the lid off the jar.",        syn:"yank",        ant:null,           def:"to pull and twist something suddenly or violently away from its position", defKo:"무언가를 제자리에서 갑자기 세게 잡아 비틀다"},
+  {word:"lava",          pos:"noun", example:"The volcano erupted, and molten lava flowed down the mountainside.",       syn:null,          ant:null,           def:"hot, melted rock that flows out of a volcano crater",                    defKo:"화산 분화구에서 흘러나오는 뜨겁고 녹은 암석, 용암"},
+  {word:"earthquake",    pos:"noun", example:"The earthquake shook the entire city, which caused buildings to tremble.", syn:null,          ant:null,           def:"a sudden, violent movement of the Earth's surface, sometimes causing great damage", defKo:"지구 표면이 갑자기 격렬하게 움직이는 것, 때로 큰 피해를 일으킴, 지진"},
+  {word:"flood",         pos:"noun", example:"Heavy rains led to a flood that submerged the houses in water.",           syn:null,          ant:null,           def:"a large amount of water that quickly covers land that is usually dry",   defKo:"평소 건조한 땅을 빠르게 뒤덮는 많은 양의 물, 홍수"},
+  {word:"landslide",     pos:"noun", example:"After days of rain, a landslide covered the road with dirt and rocks.",    syn:null,          ant:null,           def:"a mass of rock and dirt moving suddenly and quickly down a steep slope", defKo:"가파른 경사면을 따라 바위와 흙이 갑자기 빠르게 무너져 내리는 것, 산사태"},
 ];
-const SA_ALL=['reside','clueless','unlawful','threatened','shriek','unsecured','hobble','control','appealing','praise','study','strategy','method','aware','legal','whisper','tight','ugly'];
-const POS_VALS=['noun','verb','adj.','adv.'];
+const SA_ALL=['roar','whimper','excellent','terrible','completely','partly','thrilled','miserable','eager','uninterested','scurry','authorized','expired','calfskin','yank'];
+const POS_VALS=['noun','verb','adj.','adv.','idiom'];
 const isPOS=v=>POS_VALS.includes(v);
 
 // ── Type restriction ──────────────────────────────────────────
@@ -383,7 +386,7 @@ let defOrder=[],defIdx=0,defScore=0,defChoices=[],defAnswered=null;
 
 // ── Result DB (shared Supabase-backed API also used by the portfolio dashboard) ──
 const API_BASE='https://portfolio-dashboard-hmwa.onrender.com';
-const WEEK_LABEL='21';
+const WEEK_LABEL='2';
 
 // ── In-progress save (survives an accidental refresh mid-quiz) ──────────
 // Keyed per week since localStorage is shared across index.html/week*.html
@@ -577,6 +580,9 @@ function gradeMatchSlots(w){
         tag.className='slot-ans-tag';
         tag.textContent='정답 없음';
         el.appendChild(tag);
+        // this chip was misplaced (this word has no answer for this slot) —
+        // return it to the pool so a later word that actually needs it can still find it
+        if(type!=='pos')poolSet.add(val);
       }
       return;
     }
@@ -587,6 +593,10 @@ function gradeMatchSlots(w){
       tag.className='slot-ans-tag';
       tag.textContent=(val?'':'미입력 · ')+'정답: '+correct;
       el.appendChild(tag);
+      // wrong answer — return the misplaced chip to the pool instead of
+      // leaving it stuck here, since another word may need it as its own
+      // correct synonym/antonym later in the quiz
+      if(val&&type!=='pos')poolSet.add(val);
     }
   });
 }
@@ -819,7 +829,7 @@ function render(){
   if(phase==='start'){
     document.getElementById('progressFill').style.width='0%';
     app.innerHTML=`<div style="text-align:center;padding:22px 8px">
-      <div style="font-size:2.4rem">📖</div><h2>WEEK 21 영단어 시험</h2>
+      <div style="font-size:2.4rem">📖</div><h2>WEEK 2 영단어 시험</h2>
       <p style="color:#5c5345;line-height:1.8;font-size:.92rem">
         왼쪽: 단어 받아쓰기 (펜으로)<br>오른쪽: 동의어 · 반의어 · 품사 드래그 배치<br>15단어 완료 후 자동 채점
       </p>

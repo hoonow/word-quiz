@@ -179,7 +179,10 @@ header h1{font-size:1.1rem;margin:0;}
 <body>
 <div class="wrap">
   <header>
-    <h1>📝 영단어 시험</h1>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <a href="index.html" class="history-btn" style="text-decoration:none;">🏠</a>
+      <h1>📝 영단어 시험</h1>
+    </div>
     <div style="display:flex;align-items:center;gap:8px;">
       <button class="history-btn" onclick="showHistory()">📊 기록</button>
       <span class="stamp">WEEK 1</span>
@@ -577,6 +580,9 @@ function gradeMatchSlots(w){
         tag.className='slot-ans-tag';
         tag.textContent='정답 없음';
         el.appendChild(tag);
+        // this chip was misplaced (this word has no answer for this slot) —
+        // return it to the pool so a later word that actually needs it can still find it
+        if(type!=='pos')poolSet.add(val);
       }
       return;
     }
@@ -587,6 +593,10 @@ function gradeMatchSlots(w){
       tag.className='slot-ans-tag';
       tag.textContent=(val?'':'미입력 · ')+'정답: '+correct;
       el.appendChild(tag);
+      // wrong answer — return the misplaced chip to the pool instead of
+      // leaving it stuck here, since another word may need it as its own
+      // correct synonym/antonym later in the quiz
+      if(val&&type!=='pos')poolSet.add(val);
     }
   });
 }
