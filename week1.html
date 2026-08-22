@@ -392,7 +392,7 @@ function clearCanvas(){if(!ctx||!cvs)return;ctx.clearRect(0,0,cvs.offsetWidth,19
 
 // ── State ─────────────────────────────────────────────────────
 let phase='start',wordOrder=[],wIdx=0,subPhase='input';
-let wordResults=[],completedWords=[];
+let wordResults=[],completedWords=[],resumeStack=[];
 let slotContents={},poolSet=new Set();
 let tapSel=null,pnd=null,ghost=null,isDrag=false;
 let resultSaved=false,historyList=[];
@@ -413,7 +413,7 @@ function saveProgress(){
       localStorage.setItem(PROGRESS_KEY,JSON.stringify({
         phase,isReview,
         quizWordNames:isReview?quizWords.map(w=>w.word):null,
-        wordOrder,wIdx,wordResults,completedWords,slotContents,
+        wordOrder,wIdx,wordResults,completedWords,slotContents,resumeStack,
         poolSet:[...poolSet],
       }));
     }else if(phase==='defquiz'){
@@ -538,7 +538,7 @@ function startQuiz(){
   quizWords=WORDS;isReview=false;
   wordOrder=shuffle(quizWords.map((_,i)=>i));
   slotContents={};poolSet=new Set(shuffle([...SA_ALL]));
-  wordResults=[];completedWords=[];resultSaved=false;wIdx=0;subPhase='input';phase='quiz';render();
+  wordResults=[];completedWords=[];resumeStack=[];resultSaved=false;wIdx=0;subPhase='input';phase='quiz';render();
 }
 
 // ── Definition quiz (multiple choice, meaning only) ──────────────
@@ -592,7 +592,7 @@ function startReview(list){
   const pool=[];
   list.forEach(w=>{if(w.syn)pool.push(w.syn);if(w.ant)pool.push(w.ant);});
   poolSet=new Set(shuffle(pool));
-  wordResults=[];completedWords=[];resultSaved=false;wIdx=0;subPhase='input';phase='quiz';render();
+  wordResults=[];completedWords=[];resumeStack=[];resultSaved=false;wIdx=0;subPhase='input';phase='quiz';render();
 }
 function showConfirm(){
   document.getElementById('checkRow').style.display='none';
@@ -656,6 +656,13 @@ function gradeDictation(ok){
 }
 function nextWord(){
   completedWords.push(quizWords[wordOrder[wIdx]].word);
+  // finished redoing a word jumped to from later in the quiz — go back to
+  // where we jumped from instead of plowing forward through already-done words
+  if(resumeStack.length){
+    wIdx=resumeStack.pop();
+    subPhase='input';tapSel=null;render();
+    return;
+  }
   wIdx++;
   if(wIdx>=wordOrder.length){clearProgress();phase='result';render();return;}
   subPhase='input';tapSel=null;render();
@@ -665,21 +672,22 @@ function prevWord(){
   jumpToWord(wIdx-1);
 }
 // Jump back to an already-visited word (the nav bar only allows this, not
-// skipping ahead to words not yet reached). Rolls back every word from the
-// current position down to the target one, same as stepping back with
-// prevWord() repeatedly.
+// skipping ahead to words not yet reached). Only resets THAT one word so it
+// can be redone — every other already-solved word keeps its grade, slot
+// chips, and place in the completed list untouched. Remembers the position
+// we jumped from (as a stack, so chained jumps unwind correctly) and
+// nextWord() returns there once the redone word is finished.
 function jumpToWord(targetIdx){
   if(targetIdx<0||targetIdx>=wIdx)return;
-  while(wIdx>targetIdx){
-    wIdx--;
-    completedWords.length=wIdx;
-    const wk=quizWords[wordOrder[wIdx]].word;
-    wordResults=wordResults.filter(r=>r.word!==wk);
-    ['syn','ant','pos'].forEach(t=>{
-      const sid=wk+'-'+t,val=slotContents[sid];
-      if(val){if(!isPOS(val))poolSet.add(val);delete slotContents[sid];}
-    });
-  }
+  resumeStack.push(wIdx);
+  const wk=quizWords[wordOrder[targetIdx]].word;
+  wordResults=wordResults.filter(r=>r.word!==wk);
+  completedWords=completedWords.filter(cw=>cw!==wk);
+  ['syn','ant','pos'].forEach(t=>{
+    const sid=wk+'-'+t,val=slotContents[sid];
+    if(val){if(!isPOS(val))poolSet.add(val);delete slotContents[sid];}
+  });
+  wIdx=targetIdx;
   subPhase='input';tapSel=null;render();
 }
 
@@ -1052,6 +1060,7 @@ speechSynthesis.onvoiceschanged=()=>{};speechSynthesis.getVoices();
       completedWords=Array.isArray(data.completedWords)?data.completedWords:[];
       slotContents=(data.slotContents&&typeof data.slotContents==='object')?data.slotContents:{};
       poolSet=new Set(Array.isArray(data.poolSet)?data.poolSet:[]);
+      resumeStack=Array.isArray(data.resumeStack)?data.resumeStack.filter(n=>Number.isInteger(n)&&n>=0&&n<wordOrder.length):[];
       // the word we were on may have been mid-confirm/reveal when the page
       // reloaded — resume it from a clean input state rather than trying to
       // rebuild that transient UI, but keep every earlier word's progress
