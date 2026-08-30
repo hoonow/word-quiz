@@ -215,6 +215,10 @@ header h1{font-size:1.1rem;margin:0;}
       <h3>🔊 발음 확인</h3>
       <button class="history-close" onclick="closePronounceCheck()">✕</button>
     </div>
+    <div style="padding:10px 18px 0;">
+      <label for="voiceSelect" style="display:block;font-size:.72rem;font-weight:bold;color:#8a7f6a;text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px;">영어 음성 선택</label>
+      <select id="voiceSelect" onchange="onVoiceSelected(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;border:1.5px solid var(--line);font-family:inherit;font-size:.85rem;background:#fff;color:var(--ink);"></select>
+    </div>
     <div class="history-body" id="pronounceBody"></div>
   </div>
 </div>
@@ -303,10 +307,36 @@ function getVoicesAsync(){
     setTimeout(fin,1000);
   });
 }
+// Some devices install several English voices/accents (en-US, en-GB, en-IN,
+// ...). Let the user pick one in the pronounce-check popup instead of
+// always defaulting to en-US / whichever the browser lists first.
+const VOICE_PREF_KEY='wordquiz_voice_uri';
+function pickEnglishVoice(vs){
+  try{
+    const uri=localStorage.getItem(VOICE_PREF_KEY);
+    if(uri){const v=vs.find(v=>v.voiceURI===uri);if(v)return v;}
+  }catch(e){}
+  return vs.find(v=>v.lang==='en-US')||vs.find(v=>v.lang.startsWith('en'))||null;
+}
+function onVoiceSelected(uri){
+  try{localStorage.setItem(VOICE_PREF_KEY,uri);}catch(e){}
+}
+async function populateVoiceSelect(){
+  const sel=document.getElementById('voiceSelect');
+  if(!sel)return;
+  const vs=await getVoicesAsync();
+  const enVoices=vs.filter(v=>v.lang.startsWith('en'));
+  if(!enVoices.length){sel.innerHTML='<option>이 기기에 설치된 영어 음성이 없습니다</option>';sel.disabled=true;return;}
+  const current=pickEnglishVoice(vs);
+  sel.disabled=false;
+  sel.innerHTML=enVoices.map(v=>
+    `<option value="${v.voiceURI}"${current&&v.voiceURI===current.voiceURI?' selected':''}>${v.name} (${v.lang})</option>`
+  ).join('');
+}
 async function wSpeak(text){
   if(!('speechSynthesis' in window))return false;
   const vs=await getVoicesAsync();
-  const b=vs.find(v=>v.lang==='en-US')||vs.find(v=>v.lang.startsWith('en'));
+  const b=pickEnglishVoice(vs);
   if(!b)return false; // no English voice installed on this device — let the caller fall back to a network voice
   return new Promise(r=>{
     const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;u.voice=b;
@@ -552,6 +582,7 @@ function showPronounceCheck(){
   if(pw===null)return;
   if(pw!=='word'){alert('비밀번호가 틀렸습니다.');return;}
   document.getElementById('pronounceOverlay').style.display='flex';
+  populateVoiceSelect();
   const body=document.getElementById('pronounceBody');
   body.innerHTML=WORDS.map((w,i)=>`
     <div class="history-row" id="pron-row-${i}" onclick="checkPronounce(${i})">
