@@ -252,10 +252,25 @@ function canDrop(slotId,isP){
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const audioCache={};
 function googleTTSUrl(t){return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(t)}&tl=en-US&client=tw-ob`;}
+// dictionaryapi.dev is only a "nicer real voice" enhancement — like Google
+// TTS below, once it proves slow/unreliable on this device we stop paying
+// its lookup/playback timeout for every new word and remember that choice.
+const DICT_API_FLAG_KEY='wordquiz_dict_api_disabled';
+let dictApiDisabled=(()=>{try{return localStorage.getItem(DICT_API_FLAG_KEY)==='1';}catch(e){return false;}})();
+let dictApiFailStreak=0;
+function disableDictApi(){
+  dictApiDisabled=true;
+  try{localStorage.setItem(DICT_API_FLAG_KEY,'1');}catch(e){}
+}
 async function getDictUrl(word){
   if(word in audioCache) return audioCache[word];
+  if(dictApiDisabled)return null;
   try{
-    const res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),1500); // don't let a slow network stall pronunciation waiting on this lookup
+    let res;
+    try{res=await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`,{signal:ctrl.signal});}
+    finally{clearTimeout(t);}
     if(!res.ok)return(audioCache[word]=null);
     const data=await res.json();let url='';
     for(const e of data){
@@ -267,7 +282,17 @@ async function getDictUrl(word){
     return(audioCache[word]=url||null);
   }catch{return(audioCache[word]=null);}
 }
-function playUrl(url){return new Promise((resolve,reject)=>{const a=new Audio(url);a.onended=resolve;a.onerror=reject;a.play().catch(reject);});}
+function playUrl(url){
+  return new Promise((resolve,reject)=>{
+    const a=new Audio(url);let started=false,done=false;
+    const fail=()=>{if(!done){done=true;reject(new Error('playback failed'));}};
+    const finish=()=>{if(!done){done=true;resolve();}};
+    a.onplaying=()=>{started=true;};
+    a.onended=finish;a.onerror=fail;
+    a.play().catch(fail);
+    setTimeout(()=>{if(!started)fail();},1500); // stuck buffering on a slow connection — give up and fall back instead of stalling
+  });
+}
 function getVoicesAsync(){
   return new Promise(resolve=>{
     const vs=speechSynthesis.getVoices();
@@ -286,19 +311,27 @@ async function wSpeak(text){
     if(b)u.voice=b;u.onend=r;u.onerror=r;speechSynthesis.cancel();speechSynthesis.speak(u);
   });
 }
-// Google's translate_tts endpoint sometimes gets blocked/rate-limited part
-// way through a session (school wifi filters, carrier NAT, etc.). Once a
-// couple of attempts in a row fail, stop retrying it for the rest of the
-// session so playback doesn't stall for several seconds on every remaining
-// word — go straight to the dictionary/Web Speech fallback instead.
-let googleTtsDisabled=false,googleTtsFailStreak=0;
+// Google's translate_tts endpoint sometimes gets blocked/rate-limited or is
+// just slow (school wifi filters, carrier NAT, some tablets, etc.). Once a
+// couple of attempts in a row fail, stop retrying it so playback doesn't
+// stall for several seconds on every remaining word — go straight to the
+// dictionary/Web Speech fallback instead. Remembered in localStorage (per
+// device/browser) so a tablet that's already shown Google TTS is unreliable
+// stays fast on every future visit instead of re-learning that every time.
+const GOOGLE_TTS_FLAG_KEY='wordquiz_google_tts_disabled';
+let googleTtsDisabled=(()=>{try{return localStorage.getItem(GOOGLE_TTS_FLAG_KEY)==='1';}catch(e){return false;}})();
+let googleTtsFailStreak=0;
+function disableGoogleTts(){
+  googleTtsDisabled=true;
+  try{localStorage.setItem(GOOGLE_TTS_FLAG_KEY,'1');}catch(e){}
+}
 async function tryGoogleTTS(url){
   return new Promise(resolve=>{
     const a=new Audio(url);let done=false;
     const fin=s=>{if(!done){done=true;resolve(s);}};
     a.oncanplay=()=>a.play().then(()=>{}).catch(()=>fin(false));
     a.onended=()=>fin(true);a.onerror=()=>fin(false);
-    setTimeout(()=>fin(false),4000);a.load();
+    setTimeout(()=>fin(false),1500);a.load(); // short leash — a slow-but-technically-working response is just as disruptive as a dead one
   });
 }
 async function playOnce(text,skipGoogle){
@@ -306,15 +339,17 @@ async function playOnce(text,skipGoogle){
   if(!skipGoogle&&!googleTtsDisabled){
     const ok=await tryGoogleTTS(googleTTSUrl(text));
     if(ok){googleTtsFailStreak=0;return true;}
-    if(++googleTtsFailStreak>=2)googleTtsDisabled=true;
+    if(++googleTtsFailStreak>=2)disableGoogleTts();
   }
   // 2. Dict API (single word)
-  if(!text.includes(' ')){
+  if(!text.includes(' ')&&!dictApiDisabled){
     const du=await getDictUrl(text);
     if(du){
-      try{await playUrl(du);return false;}
-      catch{/* dict audio file failed to actually play (dead link, blocked, etc.) — fall through to Web Speech */}
-    }
+      try{await playUrl(du);dictApiFailStreak=0;return false;}
+      catch{/* dict audio file failed to actually play (dead link, blocked, etc.) — fall through to Web Speech */
+        if(++dictApiFailStreak>=2)disableDictApi();
+      }
+    }else if(++dictApiFailStreak>=2)disableDictApi();
   }
   // 3. Web Speech
   await wSpeak(text);
@@ -343,7 +378,7 @@ async function playOnceKorean(text){
   if(!googleTtsDisabled){
     ok=await tryGoogleTTS(googleTTSUrlKo(text));
     if(ok)googleTtsFailStreak=0;
-    else if(++googleTtsFailStreak>=2)googleTtsDisabled=true;
+    else if(++googleTtsFailStreak>=2)disableGoogleTts();
   }
   if(ok)return;
   // Web Speech fallback: only speak if a real Korean voice is installed on
