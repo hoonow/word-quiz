@@ -304,11 +304,14 @@ function getVoicesAsync(){
   });
 }
 async function wSpeak(text){
+  if(!('speechSynthesis' in window))return false;
   const vs=await getVoicesAsync();
+  const b=vs.find(v=>v.lang==='en-US')||vs.find(v=>v.lang.startsWith('en'));
+  if(!b)return false; // no English voice installed on this device — let the caller fall back to a network voice
   return new Promise(r=>{
-    const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;
-    const b=vs.find(v=>v.lang==='en-US')||vs.find(v=>v.lang.startsWith('en'));
-    if(b)u.voice=b;u.onend=r;u.onerror=r;speechSynthesis.cancel();speechSynthesis.speak(u);
+    const u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=0.85;u.voice=b;
+    u.onend=()=>r(true);u.onerror=()=>r(false);
+    speechSynthesis.cancel();speechSynthesis.speak(u);
   });
 }
 // Google's translate_tts endpoint sometimes gets blocked/rate-limited or is
@@ -335,24 +338,28 @@ async function tryGoogleTTS(url){
   });
 }
 async function playOnce(text,skipGoogle){
-  // 1. Google Translate TTS
+  // 1. Web Speech, using whatever language pack is already installed on
+  // this device. No network involved at all, so it's effectively instant —
+  // tried first because Google TTS / the dictionary API below can be slow
+  // or blocked on some tablets, which is what actually causes long waits.
+  if(await wSpeak(text))return true;
+  // 2. Google Translate TTS (only reached if this device has no English
+  // voice installed for Web Speech to use)
   if(!skipGoogle&&!googleTtsDisabled){
     const ok=await tryGoogleTTS(googleTTSUrl(text));
     if(ok){googleTtsFailStreak=0;return true;}
     if(++googleTtsFailStreak>=2)disableGoogleTts();
   }
-  // 2. Dict API (single word)
+  // 3. Dict API (single word)
   if(!text.includes(' ')&&!dictApiDisabled){
     const du=await getDictUrl(text);
     if(du){
       try{await playUrl(du);dictApiFailStreak=0;return false;}
-      catch{/* dict audio file failed to actually play (dead link, blocked, etc.) — fall through to Web Speech */
+      catch{/* dict audio file failed to actually play (dead link, blocked, etc.) */
         if(++dictApiFailStreak>=2)disableDictApi();
       }
     }else if(++dictApiFailStreak>=2)disableDictApi();
   }
-  // 3. Web Speech
-  await wSpeak(text);
   return false;
 }
 async function speakWord2x(word,btnId){
@@ -360,8 +367,8 @@ async function speakWord2x(word,btnId){
   if(btn)btn.disabled=true;if(sp)sp.style.display='inline-block';
   let skipGoogle=false;
   for(let i=0;i<2;i++){
-    const googleWorked=await playOnce(word,skipGoogle);
-    if(i===0&&!googleWorked)skipGoogle=true; // this word's Google TTS already failed once — retrying it again just wastes time before the fallback voice is heard
+    const usedFastVoice=await playOnce(word,skipGoogle);
+    if(i===0&&!usedFastVoice)skipGoogle=true; // no local voice this time, and this word's Google TTS already failed once — retrying it again just wastes time before the dictionary/silent fallback
     if(i<1)await wait(500);
   }
   if(btn)btn.disabled=false;if(sp)sp.style.display='none';
@@ -374,24 +381,28 @@ async function speakOnce(text,btnId){
 }
 function googleTTSUrlKo(t){return `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(t)}&tl=ko&client=tw-ob`;}
 async function playOnceKorean(text){
-  let ok=false;
-  if(!googleTtsDisabled){
-    ok=await tryGoogleTTS(googleTTSUrlKo(text));
-    if(ok)googleTtsFailStreak=0;
-    else if(++googleTtsFailStreak>=2)disableGoogleTts();
-  }
-  if(ok)return;
-  // Web Speech fallback: only speak if a real Korean voice is installed on
-  // this device — without one, engines mispronounce Hangul with whatever
+  // 1. Web Speech with a real Korean voice installed on this device — no
+  // network involved, so it's instant. Only use it if an actual Korean
+  // voice exists; otherwise engines mispronounce Hangul with whatever
   // default (often English) voice they fall back to, which is worse than
   // staying silent.
   const vs=await getVoicesAsync();
   const koVoice=vs.find(v=>v.lang==='ko-KR')||vs.find(v=>v.lang.startsWith('ko'));
-  if(!koVoice)return;
-  return new Promise(r=>{
-    const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=0.95;u.voice=koVoice;
-    u.onend=r;u.onerror=r;speechSynthesis.cancel();speechSynthesis.speak(u);
-  });
+  if(koVoice){
+    const ok=await new Promise(r=>{
+      const u=new SpeechSynthesisUtterance(text);u.lang='ko-KR';u.rate=0.95;u.voice=koVoice;
+      u.onend=()=>r(true);u.onerror=()=>r(false);
+      speechSynthesis.cancel();speechSynthesis.speak(u);
+    });
+    if(ok)return;
+  }
+  // 2. Google Translate TTS (only reached if this device has no Korean voice)
+  if(!googleTtsDisabled){
+    const ok=await tryGoogleTTS(googleTTSUrlKo(text));
+    if(ok){googleTtsFailStreak=0;return;}
+    if(++googleTtsFailStreak>=2)disableGoogleTts();
+  }
+  // no Korean voice and Google unavailable — stay silent rather than mispronounce
 }
 
 // ── Canvas ────────────────────────────────────────────────────
