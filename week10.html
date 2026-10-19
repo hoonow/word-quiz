@@ -846,15 +846,14 @@ function handleTap(p){
     updateSlot(p.fromSlot);updatePool();
     return;
   }
-  if(tapSel){
-    if(tapSel.answer===p.answer&&tapSel.fromSlot===p.fromSlot){
-      if(!tapSel.isP)poolSet.add(tapSel.answer);
-      tapSel=null;updatePool();return;
-    }
-    if(!tapSel.isP)poolSet.add(tapSel.answer);
+  // Selecting is highlight-only: the chip stays in poolSet, so it stays
+  // visible and survives anything that resets tapSel (reload, dragging
+  // another chip, moving to another word). It only leaves the pool when
+  // it is actually placed in a slot (dropInSlot).
+  if(tapSel&&tapSel.answer===p.answer&&tapSel.fromSlot===p.fromSlot){
+    tapSel=null;updatePool();return;
   }
   tapSel={...p};
-  if(!p.isP)poolSet.delete(p.answer);
   updatePool();
 }
 function handleSlotClick(slotId){
