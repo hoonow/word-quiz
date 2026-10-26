@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>단어 뜻 복습</title>
+<style>
+:root{--ink:#2b2520;--paper:#faf6ee;--card:#fffdf8;--rust:#c1502e;--navy:#3a4d6b;--line:#e6ddc9;--ok:#2e7d4f;--okbg:#e4f3ea;--bad:#b3261e;--badbg:#fbe7e4;--mute:#8a7f6a;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{margin:0;font-family:'Georgia',serif;background:var(--paper);color:var(--ink);}
+.wrap{max-width:560px;margin:0 auto;padding:22px 16px 60px;}
+.home-link{display:block;text-align:center;color:var(--navy);text-decoration:none;font-size:.82rem;font-weight:bold;margin-bottom:10px;}
+h1{font-size:1.4rem;text-align:center;margin:6px 0 4px;}
+p.sub{text-align:center;color:var(--mute);margin:0 0 20px;font-size:.9rem;}
+.card{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:20px;}
+.btn{display:block;width:100%;border:none;border-radius:12px;padding:15px;font-size:1.05rem;font-weight:bold;font-family:inherit;cursor:pointer;background:var(--rust);color:#fff;margin-top:12px;}
+.btn.alt{background:var(--card);color:var(--navy);border:1.5px solid var(--line);}
+.btn:active{transform:scale(.98);}
+.stat{display:flex;justify-content:space-between;color:var(--mute);font-size:.88rem;margin:6px 0;}
+.bar{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin-bottom:16px;}
+.bar>i{display:block;height:100%;width:0;background:var(--rust);transition:width .25s;}
+.qhead{display:flex;justify-content:space-between;color:var(--mute);font-size:.85rem;margin-bottom:8px;}
+.word{font-size:2rem;font-weight:bold;text-align:center;margin:14px 0 2px;}
+.pos{text-align:center;color:var(--mute);font-size:.9rem;margin-bottom:6px;}
+.spk{display:block;margin:0 auto 14px;background:none;border:1.5px solid var(--line);border-radius:20px;padding:6px 16px;font-size:.9rem;color:var(--navy);cursor:pointer;font-family:inherit;}
+.opts{display:flex;flex-direction:column;gap:10px;}
+.opt{text-align:left;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:14px 16px;font-size:1rem;font-family:inherit;color:var(--ink);cursor:pointer;line-height:1.4;}
+.opt:active{transform:scale(.99);}
+.opt.ok{border-color:var(--ok);background:var(--okbg);}
+.opt.bad{border-color:var(--bad);background:var(--badbg);}
+.opt:disabled{cursor:default;}
+.fb{margin-top:14px;padding:12px 14px;border-radius:10px;background:#f3ecdc;font-size:.92rem;line-height:1.5;}
+.fb b{color:var(--rust);}
+.fb .ex{color:var(--mute);margin-top:4px;font-style:italic;}
+.score{font-size:2.6rem;font-weight:bold;text-align:center;color:var(--rust);margin:6px 0;}
+.wrong-item{border-top:1px solid var(--line);padding:10px 0;font-size:.95rem;line-height:1.45;}
+.wrong-item b{font-size:1.05rem;}
+.hide{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="home-link" href="./">← 주차 선택으로</a>
+  <h1>🧠 단어 뜻 복습</h1>
+  <p class="sub">Week 1~11 단어 · 30문제씩 랜덤</p>
+
+  <div id="start" class="card">
+    <div class="stat"><span>전체 단어</span><b id="s-total"></b></div>
+    <div class="stat"><span>아직 안 나온 단어</span><b id="s-left"></b></div>
+    <div class="bar"><i id="s-bar"></i></div>
+    <p style="font-size:.88rem;color:var(--mute);margin:0;line-height:1.5">안 나온 단어부터 먼저 출제돼요. 모두 한 번씩 나오면 처음부터 다시 섞여요.</p>
+    <button class="btn" id="go">30문제 시작</button>
+    <button class="btn alt" id="reset">기록 초기화 (처음부터)</button>
+  </div>
+
+  <div id="quiz" class="card hide">
+    <div class="qhead"><span id="q-no"></span><span id="q-score"></span></div>
+    <div class="bar"><i id="q-bar"></i></div>
+    <div class="word" id="q-word"></div>
+    <div class="pos" id="q-pos"></div>
+    <button class="spk" id="spk">🔊 발음 듣기</button>
+    <div class="opts" id="opts"></div>
+    <div class="fb hide" id="fb"></div>
+    <button class="btn hide" id="next">다음 →</button>
+  </div>
+
+  <div id="result" class="card hide">
+    <div style="text-align:center;color:var(--mute)">결과</div>
+    <div class="score" id="r-score"></div>
+    <div style="text-align:center;color:var(--mute);margin-bottom:10px" id="r-msg"></div>
+    <div id="r-wrong"></div>
+    <button class="btn" id="again">새 30문제 풀기</button>
+    <button class="btn alt" id="home">처음 화면으로</button>
+  </div>
+</div>
+<script>
+const ALL=[{"word":"nymph","pos":"noun","ex":"The dragonfly eggs hatched into nymphs.","def":"a form of an insect that has not yet developed into an adult, but is often very similar to an adult","ko":"아직 성충으로 자라지 않았지만 성충과 매우 비슷한 곤충의 형태, 애벌레/유충","w":1},{"word":"molt","pos":"verb","ex":"I observed a butterfly molt out of its cocoon.","def":"to cast off skin, feathers, fur, horns, or an outer layer regularly","ko":"허물이나 깃털, 털, 뿔 등 겉껍질을 정기적으로 벗다, 탈피하다","w":1},{"word":"unsuspecting","pos":"adj.","ex":"The unsuspecting zebra did not know a cheetah was behind it.","def":"not knowing there is any danger or harm","ko":"위험이나 해가 있다는 것을 모르는, 낌새를 못 챈","w":1},{"word":"cumbersome","pos":"adj.","ex":"Wearing a safety helmet can be cumbersome, but it is important.","def":"awkward because of being large, heavy, or not effective","ko":"크거나 무겁거나 효과적이지 않아서 다루기 불편한, 성가신","w":1},{"word":"loose-leaf","pos":"adj.","ex":"My notebook has loose-leaf pages, allowing me to organize them easily.","def":"having pages that can easily be taken out and put back again","ko":"페이지를 쉽게 뺐다 끼웠다 할 수 있는, 낱장으로 된","w":1},{"word":"meanwhile","pos":"adv.","ex":"I will research on the Internet. Meanwhile, you can read through the books.","def":"at the same time","ko":"동시에, 그동안에","w":1},{"word":"vengeance","pos":"noun","ex":"We should forgive instead of wanting vengeance when we are angry.","def":"the act of taking action against someone to punish that person for causing harm","ko":"해를 끼친 사람을 벌하기 위해 행동을 취하는 것, 복수","w":1},{"word":"fidgety","pos":"adj.","ex":"The child became fidgety during the long car ride and moved constantly.","def":"unable to stay still","ko":"가만히 있지 못하는, 안절부절못하는","w":1},{"word":"devoted","pos":"adj.","ex":"Matt is a devoted friend who is always there to support me.","def":"extremely loving and loyal","ko":"매우 사랑하고 충실한, 헌신적인","w":1},{"word":"vigorously","pos":"adv.","ex":"The chef vigorously stirred the ingredients to create a thick sauce.","def":"in a way that is very forceful or energetic","ko":"매우 힘차고 활기차게","w":1},{"word":"mutter","pos":"verb","ex":"Andrew muttered unhappily when his sister ate his candy.","def":"to say something in a quiet voice that is difficult to hear","ko":"알아듣기 힘든 조용한 목소리로 말하다, 중얼거리다","w":1},{"word":"land","pos":"noun","ex":"The children ran across the open land.","def":"the surface of the earth that is not covered by water","ko":"물로 덮여 있지 않은 지구의 표면, 땅","w":1},{"word":"prevent","pos":"verb","ex":"The gate was locked to prevent anyone from coming through.","def":"to stop something from happening or someone from doing something","ko":"어떤 일이 일어나거나 누군가 무언가를 하는 것을 막다, 예방하다","w":1},{"word":"wash away","pos":"phr. verb","ex":"I washed away the dirt on my hands at the bathroom sink.","def":"to remove or carry something away with water or rain","ko":"물이나 비로 무언가를 없애거나 씻겨 보내다","w":1},{"word":"soil","pos":"noun","ex":"Plants cannot grow well in dry soil.","def":"the material on the surface of the ground in which plants grow","ko":"식물이 자라는 땅 표면의 물질, 흙","w":1},{"word":"bellow","pos":"verb","ex":"The elephant bellowed loudly, signaling her calf to stay alert.","def":"(of a large animal) to make a loud, deep sound","ko":"(큰 동물이) 크고 깊은 소리를 내다, 큰 소리로 울부짖다","w":2},{"word":"nifty","pos":"adj.","ex":"The students made a nifty robot for their science project.","def":"good, pleasing, or effective","ko":"좋은, 마음에 드는, 효과적인","w":2},{"word":"nostril","pos":"noun","ex":"I could not breathe through my nostrils because of my allergies.","def":"one of the two openings in the nose through which air moves when breathing","ko":"숨쉴 때 공기가 드나드는 코의 두 구멍 중 하나, 콧구멍","w":2},{"word":"gills","pos":"noun","ex":"Fish have gills that allow them to breathe underwater.","def":"an organ which allows fish and other water creatures to breathe underwater","ko":"물고기 등 수중 생물이 물속에서 숨을 쉴 수 있게 해주는 기관, 아가미","w":2},{"word":"quite","pos":"adv.","ex":"It was quite a surprise when my sister threw a party for me.","def":"entirely; to a full extent or degree","ko":"완전히, 충분한 정도로","w":2},{"word":"over the moon","pos":"idiom","ex":"Jen was over the moon when she received a puppy for her birthday.","def":"very pleased","ko":"매우 기뻐하는","w":2},{"word":"keen","pos":"adj.","ex":"My little brother is keen on riding his bicycle without training wheels.","def":"very interested or wanting to do something very much","ko":"무언가를 매우 하고 싶어하거나 관심이 많은","w":2},{"word":"skitter","pos":"verb","ex":"I watched the mouse skitter across the kitchen floor.","def":"to move quickly and lightly along a surface","ko":"표면을 따라 빠르고 가볍게 움직이다","w":2},{"word":"valid","pos":"adj.","ex":"Your ticket is still valid, so you can enter the amusement park.","def":"able to be accepted","ko":"받아들여질 수 있는, 유효한","w":2},{"word":"suede","pos":"adj.","ex":"Maria bought a new pair of soft, suede shoes.","def":"made of a soft leather","ko":"부드러운 가죽으로 만든, 스웨이드의","w":2},{"word":"wrench","pos":"verb","ex":"James had to use a lot of strength to wrench the lid off the jar.","def":"to pull and twist something suddenly or violently away from its position","ko":"무언가를 제자리에서 갑자기 세게 잡아 비틀다","w":2},{"word":"lava","pos":"noun","ex":"The volcano erupted, and molten lava flowed down the mountainside.","def":"hot, melted rock that flows out of a volcano crater","ko":"화산 분화구에서 흘러나오는 뜨겁고 녹은 암석, 용암","w":2},{"word":"earthquake","pos":"noun","ex":"The earthquake shook the entire city, which caused buildings to tremble.","def":"a sudden, violent movement of the Earth's surface, sometimes causing great damage","ko":"지구 표면이 갑자기 격렬하게 움직이는 것, 때로 큰 피해를 일으킴, 지진","w":2},{"word":"flood","pos":"noun","ex":"Heavy rains led to a flood that submerged the houses in water.","def":"a large amount of water that quickly covers land that is usually dry","ko":"평소 건조한 땅을 빠르게 뒤덮는 많은 양의 물, 홍수","w":2},{"word":"landslide","pos":"noun","ex":"After days of rain, a landslide covered the road with dirt and rocks.","def":"a mass of rock and dirt moving suddenly and quickly down a steep slope","ko":"가파른 경사면을 따라 바위와 흙이 갑자기 빠르게 무너져 내리는 것, 산사태","w":2},{"word":"nuzzle","pos":"verb","ex":"The boy lovingly nuzzled his dog.","def":"to gently touch, rub, or press against something or someone to show affection","ko":"애정을 표현하려고 무언가나 누군가를 부드럽게 만지거나 비비거나 누르다, 코를 비비다","w":3},{"word":"bare","pos":"verb","ex":"Sue bared her injured knee to her dad so he could clean her wound.","def":"to remove something that covers something else","ko":"무언가를 덮고 있는 것을 제거하다, 드러내다","w":3},{"word":"veterinarian","pos":"noun","ex":"Tom's dream is to become a veterinarian to care for sick animals.","def":"a medical professional who takes care of animals","ko":"동물을 돌보는 의료 전문가, 수의사","w":3},{"word":"nursery","pos":"noun","ex":"Some animals are cared for in nurseries before they can roam free in the wild.","def":"a place where young animals grow or are cared for","ko":"어린 동물들이 자라거나 보살핌을 받는 장소, 사육장/보육시설","w":3},{"word":"douse","pos":"verb","ex":"My sister doused me with a water gun.","def":"to make something or someone wet with water","ko":"무언가나 누군가를 물로 흠뻑 적시다","w":3},{"word":"appropriately","pos":"adv.","ex":"The students dressed appropriately in their uniforms for the school event.","def":"in a manner that is suitable for the occasion or purpose","ko":"상황이나 목적에 적합한 방식으로, 적절하게","w":3},{"word":"simmer","pos":"verb","ex":"The soup began to simmer and filled the house with a delicious smell.","def":"to cook a liquid to the point that it gives off steam","ko":"액체가 김이 날 정도로 끓이다, 약한 불에서 끓이다","w":3},{"word":"challenge","pos":"noun","ex":"Learning how to ride a bike was a challenge, but now I can do it easily.","def":"something that is hard to do but helps you learn or grow","ko":"하기 어렵지만 배우거나 성장하는 데 도움이 되는 것, 도전","w":3},{"word":"hue","pos":"noun","ex":"The sky at sunset had a beautiful orange hue.","def":"the degree of lightness, darkness, strength, etc. of a color","ko":"색의 밝기, 어둡기, 강도 등의 정도, 색조","w":3},{"word":"petrified","pos":"adj.","ex":"When I saw the big spider, I was petrified and could not move.","def":"extremely frightened","ko":"극도로 겁에 질린","w":3},{"word":"posse","pos":"noun","ex":"A posse of friends joined me for a hike up a mountain.","def":"a group of people who have come together for the same purpose","ko":"같은 목적을 위해 모인 사람들의 무리","w":3},{"word":"weathering","pos":"noun","ex":"Over time, the old statue in the park started to break apart due to weathering.","def":"the process in which weather breaks rocks and soil into smaller pieces","ko":"날씨가 바위와 흙을 더 작은 조각으로 부수는 과정, 풍화","w":3},{"word":"erosion","pos":"noun","ex":"Water and wind erosion are affecting homes around the beach.","def":"the process of soil, stone, etc. being gradually damaged and removed by the waves, rain, or wind","ko":"파도, 비, 바람에 의해 흙, 돌 등이 점차 손상되고 제거되는 과정, 침식","w":3},{"word":"deposition","pos":"noun","ex":"Rivers help with deposition by leaving soil on the land.","def":"the process in which soil and rocks are added to a landform","ko":"흙과 바위가 지형에 더해지는 과정, 퇴적","w":3},{"word":"delta","pos":"noun","ex":"Deltas are important because they are home to a variety of species.","def":"an area of low, flat land where rivers flow into the ocean","ko":"강이 바다로 흘러들어가는 낮고 평평한 지역, 삼각주","w":3},{"word":"confess","pos":"verb","ex":"The criminal confessed to the crime during questioning.","def":"to say one has done something wrong","ko":"잘못을 저질렀다고 말하다, 자백하다","w":5},{"word":"tote","pos":"verb","ex":"I had to help my mom tote some heavy boxes.","def":"to carry something, especially something heavy or awkward","ko":"무언가를, 특히 무겁거나 다루기 힘든 것을 나르다","w":5},{"word":"stitch","pos":"noun","ex":"My grandma made a pretty stitch of a leaf.","def":"a loop of thread or yarn resulting from a single movement of the needle in sewing or knitting","ko":"바느질이나 뜨개질에서 바늘을 한 번 움직여 생기는 실이나 털실의 고리, 한 땀","w":5},{"word":"recycled","pos":"adj.","ex":"I think recycled papers are perfectly good to use.","def":"having been used before and then put through a process so that it can form a new product","ko":"이전에 사용되었다가 새 제품으로 만들어질 수 있도록 가공된","w":5},{"word":"roam","pos":"verb","ex":"The girl roamed around town with no plans.","def":"to go from place to place without purpose or direction","ko":"목적이나 방향 없이 이곳저곳 돌아다니다","w":5},{"word":"naughty","pos":"adj.","ex":"The naughty boy pulled the girl's hair.","def":"behaving in a bad way","ko":"나쁘게 행동하는, 장난꾸러기인","w":5},{"word":"seize","pos":"verb","ex":"The soldiers seized control of the town during the war.","def":"to take using sudden force","ko":"갑작스러운 힘을 이용해 빼앗다, 붙잡다","w":5},{"word":"raid","pos":"noun","ex":"The bank robbers wore masks so they could not be recognized during the raid.","def":"a short sudden attack, usually by a small group of people","ko":"보통 소규모 집단이 벌이는 짧고 갑작스러운 공격, 습격","w":5},{"word":"thrilling","pos":"adj.","ex":"Abigail loves to read thrilling adventure stories.","def":"causing enjoyment","ko":"즐거움을 주는, 짜릿한","w":5},{"word":"favor","pos":"noun","ex":"Over the years, eating meat fell out of favor with my grandpa.","def":"approval or liking of someone or something","ko":"누군가나 무언가에 대한 인정이나 호감","w":5},{"word":"unearth","pos":"verb","ex":"Archaeologists work for years to unearth fossils from millions of years ago.","def":"to discover something in the ground","ko":"땅속에서 무언가를 발견하다, 발굴하다","w":5},{"word":"mulch","pos":"noun","ex":"My grandmother put a thick layer of mulch around the flowers.","def":"a protective covering such as sawdust, compost, or paper spread on the ground to keep water or to improve it","ko":"물을 유지하거나 토양을 개선하기 위해 땅에 뿌리는 톱밥, 퇴비, 종이 등의 보호 덮개, 멀칭재","w":5},{"word":"fabric","pos":"noun","ex":"The seamstress used silk fabric to make my aunt's wedding gown.","def":"cloth or material for making clothes, covering furniture, etc.","ko":"옷을 만들거나 가구를 덮는 데 쓰이는 천이나 재료, 직물","w":5},{"word":"loam","pos":"noun","ex":"The garden had rich, dark loam that made it easy for the vegetables to grow.","def":"high-quality soil that is a mixture of sand, clay, and decaying plant material","ko":"모래, 점토, 부식된 식물이 섞인 고품질 토양, 양토","w":5},{"word":"burlap","pos":"noun","ex":"To protect the young trees, the farmer wrapped their trunks in burlap.","def":"a type of thick, rough cloth used for coverings that must be strong","ko":"튼튼해야 하는 덮개에 쓰이는 두껍고 거친 천, 마대/삼베","w":5},{"word":"ordinary","pos":"adj.","ex":"All the birds are ordinary and look the same.","def":"not different in any way; normal","ko":"특별히 다르지 않은, 평범한","w":6},{"word":"cable","pos":"noun","ex":"The cables are connected to the towers.","def":"a set of wires covered by plastic that carries electricity, phone signals, etc.","ko":"전기나 전화 신호 등을 전달하는, 플라스틱으로 덮인 전선 묶음, 케이블","w":6},{"word":"convert","pos":"verb","ex":"Solar panels convert sunlight into energy.","def":"to change in form, appearance, or use","ko":"형태, 외양, 용도를 바꾸다, 전환하다","w":6},{"word":"emission","pos":"noun","ex":"Factories release harmful emissions in the air.","def":"the act of sending out gas, heat, light, etc.","ko":"가스, 열, 빛 등을 내보내는 행위, 배출","w":6},{"word":"clearing","pos":"noun","ex":"I ran around in the clearing because there was so much space.","def":"a small area of usually open land","ko":"보통 탁 트인 작은 공간, 공터","w":6},{"word":"cot","pos":"noun","ex":"My friends and I slept on cots in our tents when camping.","def":"a small bed that folds up","ko":"접을 수 있는 작은 침대, 간이침대","w":6},{"word":"stock up","pos":"phr. verb","ex":"My mom stocked up on a lot of food before the tornado hit.","def":"to buy a large quantity of something for later use","ko":"나중에 쓰기 위해 많은 양을 사두다, 비축하다","w":6},{"word":"perch","pos":"verb","ex":"The koala perched on a strong tree branch for hours.","def":"to sit on or near the edge of something","ko":"무언가의 가장자리 위나 근처에 앉다","w":6},{"word":"malaria","pos":"noun","ex":"Some people take medicine to stay safe from malaria.","def":"a disease spread by mosquitos that causes fever and sweating","ko":"모기를 통해 퍼지는, 열과 땀을 일으키는 질병, 말라리아","w":6},{"word":"show-off","pos":"noun","ex":"Sarah is a show-off because she always brags about her new jewelry.","def":"a person who tries to impress others with his or her abilities or belongings","ko":"자신의 능력이나 소유물로 남에게 과시하려는 사람, 잘난 척하는 사람","w":6},{"word":"lustrous","pos":"adj.","ex":"The dog has long and lustrous hair.","def":"very shiny","ko":"매우 반짝이는, 윤기 나는","w":6},{"word":"need","pos":"noun","ex":"Water is a basic need for all living things.","def":"something one must have in order to live a satisfactory life","ko":"만족스러운 삶을 살기 위해 반드시 있어야 하는 것, 필요한 것","w":6},{"word":"reproduce","pos":"verb","ex":"Animals reproduce to grow their families.","def":"to produce a new living thing of the same type as itself","ko":"자신과 같은 종류의 새로운 생명체를 만들어내다, 번식하다","w":6},{"word":"survive","pos":"verb","ex":"Plants need sunlight to grow and survive.","def":"to continue to live","ko":"계속 살아남다, 생존하다","w":6},{"word":"living thing","pos":"noun","ex":"A dog is a living thing that requires food, water, and shelter.","def":"an organism that needs food and water and that can grow and have babies","ko":"음식과 물이 필요하고 자라고 새끼를 낳을 수 있는 생물, 생물","w":6},{"word":"tropical","pos":"adj.","ex":"My favorite tropical fruit is a mango.","def":"of or characteristic of the areas on Earth that are very warm, with heavy rain, and diverse wildlife","ko":"지구에서 매우 따뜻하고 비가 많이 오며 다양한 야생동물이 사는 지역의, 열대의","w":7},{"word":"gallant","pos":"adj.","ex":"The gallant firefighters worked hard to put out the fire.","def":"feeling or displaying no fear","ko":"두려움을 느끼지 않거나 드러내지 않는, 용감한","w":7},{"word":"chime in","pos":"phr. verb","ex":"Michael chimed in on Lisa's conversation with Brian.","def":"to interrupt or join a conversation by adding an opinion","ko":"의견을 덧붙여 대화에 끼어들거나 참여하다","w":7},{"word":"impatiently","pos":"adv.","ex":"My grandma waited for me impatiently because I woke up late for school.","def":"in a way that shows one is annoyed because one has to wait","ko":"기다려야 해서 짜증이 난 태도로, 조급하게","w":7},{"word":"patrol","pos":"verb","ex":"The police officers patrol the streets.","def":"to go around an area or a building to see if there is any trouble or danger","ko":"문제나 위험이 있는지 살피기 위해 지역이나 건물을 돌아다니다, 순찰하다","w":7},{"word":"baron","pos":"noun","ex":"Ben is a rich baron who owns lots of land.","def":"a male from a high social class in Great Britain","ko":"영국의 상류 계층 출신 남성, 남작","w":7},{"word":"steadily","pos":"adv.","ex":"The surgeon steadily held his scalpel during the operation.","def":"in a controlled and calm way","ko":"차분하고 안정된 방식으로, 꾸준히","w":7},{"word":"obituary","pos":"noun","ex":"I was shocked to read about my neighbor's death in the obituary this morning.","def":"a report, especially in a newspaper, that gives news of someone's death","ko":"누군가의 죽음을 알리는, 특히 신문에 실리는 기사, 부고","w":7},{"word":"neglect","pos":"verb","ex":"Dave's parents neglected him, so he felt sad.","def":"to fail to give proper attention to","ko":"제대로 관심을 기울이지 않다, 방치하다","w":7},{"word":"ransom","pos":"noun","ex":"The kidnapper demanded a large ransom.","def":"a sum of money demanded for the release of a prisoner","ko":"포로를 풀어주는 대가로 요구하는 돈, 몸값","w":7},{"word":"mistreat","pos":"verb","ex":"The mean owner mistreated and hit his dog.","def":"to deal with a person or animal badly, cruelly, or unfairly","ko":"사람이나 동물을 나쁘게, 잔인하게, 또는 부당하게 대하다, 학대하다","w":7},{"word":"energy","pos":"noun","ex":"The sun provides the energy that plants use to grow and thrive.","def":"the power and ability to do work or produce a change","ko":"일을 하거나 변화를 일으키는 힘과 능력, 에너지","w":7},{"word":"absorb","pos":"verb","ex":"A sponge can easily absorb water.","def":"to take in something in a natural or slow way","ko":"자연스럽거나 서서히 무언가를 받아들이다, 흡수하다","w":7},{"word":"life cycle","pos":"noun","ex":"The life cycle of a butterfly is different in each stage.","def":"a series of changes a living thing goes through from the beginning of its life until death","ko":"생명체가 태어나서 죽을 때까지 겪는 일련의 변화, 생활사","w":7},{"word":"hatch","pos":"verb","ex":"I waited patiently to see the duckling hatch from the egg.","def":"to come out of an egg","ko":"알에서 나오다, 부화하다","w":7},{"word":"artisan","pos":"noun","ex":"The artisan worked day and night to finish the wood sculpture.","def":"someone who is skilled in making things, especially by hand","ko":"특히 손으로 물건을 만드는 데 능숙한 사람, 장인","w":9},{"word":"breakthrough","pos":"noun","ex":"Researchers are hoping for a breakthrough to cure many diseases.","def":"an important discovery in knowledge or skill","ko":"지식이나 기술에서의 중요한 발견, 돌파구","w":9},{"word":"glamorous","pos":"adj.","ex":"The model wore a glamorous gown on the runway.","def":"attractive in an exciting and special way","ko":"흥미롭고 특별한 방식으로 매력적인, 화려한","w":9},{"word":"radar","pos":"noun","ex":"The military ship gives warnings to unknown things that show up on the radar.","def":"a system that uses radio waves to find objects that cannot be seen","ko":"전파를 이용해 보이지 않는 물체를 찾는 시스템, 레이더","w":9},{"word":"appetite","pos":"noun","ex":"Ben has a big appetite and wants to eat everything on the table.","def":"the feeling of wanting to eat food","ko":"음식을 먹고 싶은 느낌, 식욕","w":9},{"word":"humungous","pos":"adj.","ex":"The people climbed up the humungous tree.","def":"extremely big","ko":"엄청나게 큰, 거대한","w":9},{"word":"startle","pos":"verb","ex":"The spider startled Grace by appearing suddenly.","def":"to cause to move suddenly; shock","ko":"갑자기 움직이게 하다, 깜짝 놀라게 하다","w":9},{"word":"cautiously","pos":"adv.","ex":"Walk cautiously on the wet floor or you might fall down.","def":"in a slow and thoughtful way to avoid trouble","ko":"문제를 피하기 위해 느리고 신중한 방식으로, 조심스럽게","w":9},{"word":"gadget","pos":"noun","ex":"The spy used a lot of gadgets on his mission.","def":"a small device with a clever design or unusual use","ko":"기발한 디자인이나 특이한 용도를 가진 작은 장치","w":9},{"word":"reset","pos":"verb","ex":"Dylan reset his computer because there is an error.","def":"to turn something on and off again to make it work correctly again","ko":"제대로 다시 작동하도록 무언가를 껐다 켜다, 재설정하다","w":9},{"word":"observe","pos":"verb","ex":"The boy observes the animals in nature.","def":"to look closely; see","ko":"자세히 살펴보다, 관찰하다","w":9},{"word":"biologist","pos":"noun","ex":"My sister became a biologist because she loves studying plants and animals.","def":"a scientist who studies living things","ko":"생물을 연구하는 과학자, 생물학자","w":9},{"word":"nutrient","pos":"noun","ex":"Fruits and vegetables are full of nutrients that help our bodies stay healthy.","def":"any substance that plants or animals need in order to live and grow","ko":"식물이나 동물이 살고 자라는 데 필요한 모든 물질, 영양소","w":9},{"word":"enough","pos":"adv.","ex":"The girl did not put sunscreen on carefully enough, so she got sunburned.","def":"as much as is necessary","ko":"필요한 만큼, 충분히","w":9},{"word":"carry","pos":"verb","ex":"Worker ants work together to carry food back to their nests.","def":"to support and take from one place to another","ko":"한 곳에서 다른 곳으로 지탱하며 옮기다, 나르다","w":9},{"word":"awkward","pos":"adj.","ex":"The awkward machine was difficult to use.","def":"difficult to use, do, or deal with","ko":"사용하거나 하거나 다루기 어려운, 불편한","w":10},{"word":"quest","pos":"noun","ex":"The friends went on a quest to find treasure.","def":"an attempt to achieve something difficult","ko":"어려운 일을 이루려는 시도, 탐구, 모험","w":10},{"word":"craze","pos":"noun","ex":"I heard playing tennis is the latest craze these days.","def":"a practice or interest that is very popular for a short time","ko":"짧은 기간 동안 매우 인기 있는 관행이나 관심사, 열풍","w":10},{"word":"particularly","pos":"adv.","ex":"I enjoy exercising, particularly walking around my neighborhood.","def":"especially, or more than usual","ko":"특히, 평소보다 더","w":10},{"word":"frustrated","pos":"adj.","ex":"The man is frustrated because his computer is not working.","def":"feeling angry or annoyed because of not being able to do something","ko":"무언가를 할 수 없어서 화나거나 짜증이 난, 좌절한","w":10},{"word":"figurine","pos":"noun","ex":"Lyla's dinosaur figurine is the size of her hand.","def":"a small, molded figure of a human or animal","ko":"사람이나 동물을 본떠 만든 작은 조각상, 작은 인형","w":10},{"word":"miniature","pos":"adj.","ex":"The girls play with their miniature dolls.","def":"being or looking exactly like something of a much bigger size","ko":"훨씬 큰 것과 똑같은 모습을 한, 축소된","w":10},{"word":"terrarium","pos":"noun","ex":"Zac builds a terrarium inside the glass jar.","def":"a closed container for growing small plants or keeping small animals","ko":"작은 식물을 기르거나 작은 동물을 키우는 밀폐 용기, 테라리움","w":10},{"word":"splatter","pos":"verb","ex":"Mom drops her coffee and it splatters on the ground.","def":"(of large drops of liquid) to fall or hit something noisily","ko":"(큰 액체 방울이) 시끄럽게 떨어지거나 튀다, 튀기다","w":10},{"word":"eagerly","pos":"adv.","ex":"The dog waits eagerly for his food.","def":"in a way that shows that someone wants to do something","ko":"무언가를 하고 싶어하는 것을 보여주는 방식으로, 간절히","w":10},{"word":"merrily","pos":"adv.","ex":"The boy merrily dances to the music.","def":"in a way that shows enjoyment or cheer","ko":"즐거움이나 기쁨을 보여주는 방식으로, 명랑하게","w":10},{"word":"certain","pos":"adj.","ex":"There are only a certain amount of people allowed in the gallery at a time.","def":"particular or specific","ko":"특정한, 어떤","w":10},{"word":"shelter","pos":"noun","ex":"Birds build nests as shelters to protect themselves and their eggs.","def":"a place that protects from bad weather or danger","ko":"악천후나 위험으로부터 보호해 주는 장소, 피난처","w":10},{"word":"space","pos":"noun","ex":"My bedroom has enough space for a bed, a desk, and a chair.","def":"an area available for or used up by some activity or thing","ko":"어떤 활동이나 물건을 위해 쓸 수 있거나 차지하는 공간","w":10},{"word":"swing","pos":"verb","ex":"I saw a monkey swing on a tree branch.","def":"to move easily and without interruption back and forth or side to side","ko":"앞뒤 또는 좌우로 부드럽고 끊김 없이 움직이다, 흔들리다","w":10},{"word":"attic","pos":"noun","ex":"I was glad I had an attic in the house to store my old things.","def":"the space in a house directly beneath the roof","ko":"집에서 지붕 바로 아래에 있는 공간, 다락방","w":11},{"word":"perplexed","pos":"adj.","ex":"Susan had a perplexed expression because of a difficult math problem.","def":"being unable to understand something clearly","ko":"무언가를 분명하게 이해하지 못하는, 당황한, 어리둥절한","w":11},{"word":"dynamo","pos":"noun","ex":"Kyle is a dynamo who barely needs to rest.","def":"a very energetic person","ko":"매우 활력이 넘치는 사람, 에너지가 넘치는 사람","w":11},{"word":"linger","pos":"verb","ex":"The smell of smoke lingered in the air.","def":"to take a long time to leave or disappear","ko":"떠나거나 사라지는 데 오랜 시간이 걸리다, 오래 남아 있다","w":11},{"word":"sprint","pos":"verb","ex":"Brian sprinted to school to meet his friends on the first day of school.","def":"to run quickly","ko":"빠르게 달리다, 전력 질주하다","w":11},{"word":"squeal","pos":"verb","ex":"The girl squealed when her dad said she could get a pet.","def":"to make a long, loud cry","ko":"길고 큰 소리로 외치다, 꽥 소리 지르다","w":11},{"word":"dilemma","pos":"noun","ex":"Carla faced a dilemma and could not decide what to do.","def":"a difficult situation","ko":"어려운 상황, 딜레마, 진퇴양난","w":11},{"word":"stealth","pos":"adj.","ex":"The thief tried to be quiet during his stealth robbery.","def":"quiet and careful so that people do not know something is happening","ko":"무슨 일이 일어나는지 사람들이 모르도록 조용하고 조심스러운, 몰래 하는","w":11},{"word":"routine","pos":"noun","ex":"Sarah's daily routine is to wake up at 7 o'clock.","def":"a regular or fixed way of doing things","ko":"일을 하는 규칙적이거나 정해진 방식, 일상, 일과","w":11},{"word":"prehistoric","pos":"adj.","ex":"During prehistoric times, dinosaurs were alive.","def":"belonging to a time before written history","ko":"문자로 기록된 역사 이전 시대의, 선사 시대의","w":11},{"word":"vanish","pos":"verb","ex":"The magician made the cards vanish.","def":"to not be seen anymore, especially in a surprising way","ko":"특히 놀랍게도 더 이상 보이지 않게 되다, 사라지다","w":11},{"word":"disperse","pos":"verb","ex":"The dandelion seeds disperse in the wind and spread to new places.","def":"to scatter in different directions","ko":"여러 방향으로 흩어지다, 흩뿌리다","w":11},{"word":"float","pos":"verb","ex":"Leaves can float on the surface of the water in a pond.","def":"to stay on the surface of a liquid or in the air","ko":"액체의 표면이나 공중에 떠 있다, 뜨다","w":11},{"word":"barb","pos":"noun","ex":"The rose bush has sharp barbs on its stems to protect itself from animals.","def":"a sharp plant hair","ko":"식물의 날카로운 털, 가시","w":11},{"word":"pollination","pos":"noun","ex":"Bees help in pollination by carrying pollen from one flower to another.","def":"the process of moving pollen between plants so new seeds can grow","ko":"새로운 씨앗이 자라도록 식물 사이에서 꽃가루를 옮기는 과정, 수분","w":11}];
+const KEY='wordreview_seen_v1', N=30;
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+function loadSeen(){try{const s=JSON.parse(localStorage.getItem(KEY)||'[]');return new Set(s.filter(w=>ALL.some(o=>o.word===w)));}catch(e){return new Set();}}
+function saveSeen(s){try{localStorage.setItem(KEY,JSON.stringify([...s]));}catch(e){}}
+let seen=loadSeen(), qs=[], qi=0, score=0, wrong=[];
+
+function show(id){['start','quiz','result'].forEach(x=>$(x).classList.toggle('hide',x!==id));window.scrollTo(0,0);}
+function renderStart(){
+  const left=ALL.filter(o=>!seen.has(o.word)).length;
+  $('s-total').textContent=ALL.length+'개';
+  $('s-left').textContent=left+'개';
+  $('s-bar').style.width=((ALL.length-left)/ALL.length*100)+'%';
+  show('start');
+}
+function pickQuestions(){
+  let picks=shuffle(ALL.filter(o=>!seen.has(o.word))).slice(0,N);
+  if(picks.length<N){
+    // unseen words ran out: top up with already-seen ones and begin a fresh cycle
+    const rest=shuffle(ALL.filter(o=>seen.has(o.word)&&!picks.includes(o))).slice(0,N-picks.length);
+    picks=picks.concat(rest);
+    seen=new Set();
+  }
+  return shuffle(picks).map(makeQ);
+}
+function makeQ(o){
+  const samePos=ALL.filter(x=>x.word!==o.word&&x.pos===o.pos&&x.ko!==o.ko);
+  const other=ALL.filter(x=>x.word!==o.word&&x.pos!==o.pos&&x.ko!==o.ko);
+  const pool=shuffle(samePos).concat(shuffle(other));
+  const ds=[];
+  for(const x of pool){if(!ds.some(d=>d.ko===x.ko))ds.push(x);if(ds.length===3)break;}
+  return {o, opts:shuffle([o].concat(ds))};
+}
+function startRound(){
+  qs=pickQuestions(); qi=0; score=0; wrong=[];
+  renderQ();show('quiz');
+}
+function renderQ(){
+  const {o,opts}=qs[qi];
+  $('q-no').textContent=(qi+1)+' / '+qs.length;
+  $('q-score').textContent='정답 '+score;
+  $('q-bar').style.width=(qi/qs.length*100)+'%';
+  $('q-word').textContent=o.word;
+  $('q-pos').textContent='('+o.pos+')';
+  $('fb').classList.add('hide');$('next').classList.add('hide');
+  const box=$('opts');box.innerHTML='';
+  opts.forEach(c=>{
+    const b=document.createElement('button');b.className='opt';b.textContent=c.ko;
+    b.onclick=()=>answer(b,c);box.appendChild(b);
+  });
+  speak(o.word);
+}
+function answer(btn,c){
+  const {o,opts}=qs[qi];
+  const ok=c===o;
+  [...$('opts').children].forEach((b,i)=>{b.disabled=true;if(opts[i]===o)b.classList.add('ok');});
+  if(!ok)btn.classList.add('bad');
+  if(ok)score++;else wrong.push(o);
+  seen.add(o.word);saveSeen(seen);
+  $('q-score').textContent='정답 '+score;
+  $('fb').innerHTML=(ok?'⭕ 정답! ':'❌ 아쉬워요. ')+'<b>'+o.word+'</b> — '+o.def+'<div class="ex">'+o.ex+'</div>';
+  $('fb').classList.remove('hide');
+  $('next').textContent=qi===qs.length-1?'결과 보기':'다음 →';
+  $('next').classList.remove('hide');
+  $('next').scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+function next(){
+  qi++;
+  if(qi>=qs.length)return showResult();
+  renderQ();
+}
+function showResult(){
+  $('r-score').textContent=score+' / '+qs.length;
+  $('r-msg').textContent=score===qs.length?'만점이에요! 🎉':(wrong.length+'개 틀렸어요. 아래 단어를 다시 확인해요.');
+  $('r-wrong').innerHTML=wrong.map(o=>'<div class="wrong-item"><b>'+o.word+'</b> ('+o.pos+') — '+o.ko+'<br><span style="color:var(--mute);font-style:italic">'+o.ex+'</span></div>').join('');
+  show('result');
+}
+function speak(t){
+  try{
+    if(!('speechSynthesis' in window))return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.9;
+    try{const uri=localStorage.getItem('wordquiz_voice_uri');if(uri){const v=speechSynthesis.getVoices().find(v=>v.voiceURI===uri);if(v)u.voice=v;}}catch(e){}
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+$('go').onclick=startRound;
+$('again').onclick=startRound;
+$('home').onclick=renderStart;
+$('next').onclick=next;
+$('spk').onclick=()=>speak(qs[qi].o.word);
+$('reset').onclick=()=>{if(confirm('출제 기록을 초기화할까요?')){seen=new Set();saveSeen(seen);renderStart();}};
+renderStart();
+</script>
+</body>
+</html>
